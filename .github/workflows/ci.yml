@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Haskell Linter
+        uses: domdere/haskell-lint-action@v1.0.2
+
+      - name: Haskell Autotag
+        uses: sol/haskell-autotag@v1
