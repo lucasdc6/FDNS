@@ -1,0 +1,27 @@
+name: Push
+
+on:
+  release:
+    types: [published, created, edited]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v2.5.0
+        with:
+          push: true
+          tags: ghcr.io/lucasdc6/internet-topology:${GITHUB_REF}
+          file: docker/Dockerfile
