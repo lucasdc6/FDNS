@@ -1,0 +1,6 @@
+.git
+.github
+docker
+dist
+dist-newstyle
+tmp

@@ -19,6 +19,10 @@ parseMessage rawMessage = DNSMessage{
         header = parseHeader headerBytes
         questions = parseQuestions (qdcount header) bodyBytes
 
+--packMessage :: DNSMessage -> ByteString
+--packMessage dnsMessage = 
+--  where header = packHeader dnsMessage
+
 
 {-|
 -- Header format
@@ -68,12 +72,18 @@ parseHeader bytes = DNSHeader{
         eleventhByte = index bytes 10
         twelfthByte = index bytes 11
 
+packHeader :: DNSHeader -> String
+packHeader header = "TODO"
+
 parseQuestions :: Word16 -> ByteString -> [DNSQuestion]
 parseQuestions 0 bytes = []
 parseQuestions n bytes = case parseQuestion bytes of
                           (Just question) -> question : (parseQuestions (n-1) bytes)
                           Nothing         -> []
   where count = fromIntegral n
+
+packQuestions :: [DNSQuestion] -> String
+packQuestions questions = Prelude.foldl (\pack question -> pack ++ packQuestion question) "" questions
 
 parseQuestion :: ByteString -> Maybe DNSQuestion
 parseQuestion bytes = Just (DNSQuestion{
@@ -88,6 +98,9 @@ parseQuestion bytes = Just (DNSQuestion{
         fouthByte = index (C.tail rest) 3
         qtype = getQType [firstByte, secondByte]
         qclass = getQClass [thirdByte, fouthByte]
+
+packQuestion :: DNSQuestion -> String
+packQuestion question = "TODO"
 
 --parseResources :: ByteString -> (DNSQuestion, DNSResource, DNSResource, DNSResource)
 --parseResources _ = (DNSQuestion{}, DNSResource{}, DNSResource{}, DNSResource{})

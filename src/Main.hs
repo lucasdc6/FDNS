@@ -11,5 +11,5 @@ main = do
   args <- getArgs
   flags <- parseArgs args
   if optHelp flags then help else 
-    runUDPServer "127.0.0.1" (optPort flags)
+    runUDPServer "0.0.0.0" (optPort flags)
     --putStrLn ("Starting server at " ++ optPort flags ++ " with config file " ++ optConfig flags)
