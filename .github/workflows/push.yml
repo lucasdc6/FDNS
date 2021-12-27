@@ -23,5 +23,5 @@ jobs:
         uses: docker/build-push-action@v2.5.0
         with:
           push: true
-          tags: ghcr.io/lucasdc6/fdns:${{env.GITHUB_REF}}
+          tags: ghcr.io/lucasdc6/fdns:${GITHUB_REF_NAME:-latest}
           file: docker/Dockerfile
