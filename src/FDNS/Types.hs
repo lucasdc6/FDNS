@@ -1,6 +1,6 @@
 module FDNS.Types where
 
-import Data.Word
+import Data.Word (Word8, Word16, Word32)
 
 data OPCODE =   QUERY
               | IQUERY
@@ -195,6 +195,13 @@ idToOpCode 1 = IQUERY
 idToOpCode 2 = STATUS
 idToOpCode _ = OPCODE_OTHER
 
+opCodeToID :: OPCODE -> Word8
+opCodeToID QUERY        = 0
+opCodeToID IQUERY       = 1
+opCodeToID STATUS       = 2
+opCodeToID OPCODE_OTHER = 3
+
+
 idToRCode :: (Integral a) => a -> RCODE
 idToRCode 0 = NO_ERROR
 idToRCode 1 = FORMAT_ERROR
@@ -203,6 +210,16 @@ idToRCode 3 = NAME_ERROR
 idToRCode 4 = NOT_IMPLEMENTED
 idToRCode 5 = REFUCER
 idToRCode _ = RCODE_OTHER
+
+rCodeToId :: RCODE -> Word8
+rCodeToId NO_ERROR        = 0
+rCodeToId FORMAT_ERROR    = 1
+rCodeToId SERVER_FAILURE  = 2
+rCodeToId NAME_ERROR      = 3
+rCodeToId NOT_IMPLEMENTED = 4
+rCodeToId REFUCER         = 5
+rCodeToId RCODE_OTHER     = 6
+
 
 data DNSHeader = DNSHeader {
   identifier          :: Word16,

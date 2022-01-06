@@ -3,8 +3,11 @@
 build:
 	cabal build
 
+build-run:
+	cabal run -- fdns -p 9053
+
 run:
-	(cd src && runghc Main.hs -p 9053)
+	cabal exec fdns -- -p 9053
 
 docker:
 	docker build -t fdns:dev -f docker/Dockerfile .

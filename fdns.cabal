@@ -33,7 +33,7 @@ library
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends:       network, utf8-string, bytestring, base >=4.13 && <4.15
+  build-depends:       network, utf8-string, bytestring >= 0.11.0.0, text, base >=4.13 && <4.15
 
   -- Directories containing source files.
   hs-source-dirs:      src
@@ -53,7 +53,7 @@ executable fdns
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends:       network, utf8-string, bytestring, base >=4.13 && <4.15
+  build-depends:       network, utf8-string, bytestring >= 0.11.0.0, text, base >=4.13 && <4.15
 
   -- Directories containing source files.
   hs-source-dirs:      src

@@ -1,8 +1,7 @@
 module FDNS.Commands where
 
-import System.Environment
-import System.Exit
-import System.Console.GetOpt
+import System.Environment     (getProgName)
+import System.Console.GetOpt  (usageInfo, getOpt, OptDescr(Option), ArgOrder(Permute), ArgDescr(NoArg, ReqArg))
 
 commandHeader :: String -> String
 commandHeader name = "Usage: " ++ name ++ " -c FILE [-p PORT]"

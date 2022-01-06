@@ -1,8 +1,7 @@
 module Main where
 
 
-import System.Console.GetOpt
-import System.Environment
+import System.Environment (getArgs)
 import FDNS.Commands
 import FDNS.Server
 

@@ -1,14 +1,14 @@
 module FDNS.Parsers.Parsers where
 
-import Control.Monad
-import Data.Word
-import Data.ByteString hiding (head, concat)
+import Data.Bits                            (shiftL)
+import Data.Word                            (Word8, Word16)
+import Data.ByteString                      (ByteString, indexMaybe, pack)
 import qualified Data.ByteString.Char8 as C (splitAt, foldl, span, tail)
 import FDNS.Types
 import FDNS.Parsers.Internal
 
-parseMessage :: ByteString -> DNSMessage
-parseMessage rawMessage = DNSMessage{
+unpackMessage :: ByteString -> DNSMessage
+unpackMessage rawMessage = DNSMessage{
   header = header,
   question = questions,
   answer = [],
@@ -16,12 +16,12 @@ parseMessage rawMessage = DNSMessage{
   additional = []
 }
   where (headerBytes, bodyBytes) = C.splitAt 12 rawMessage
-        header = parseHeader headerBytes
-        questions = parseQuestions (qdcount header) bodyBytes
+        header = unpackHeader headerBytes
+        questions = unpackQuestions (qdcount header) bodyBytes
 
---packMessage :: DNSMessage -> ByteString
---packMessage dnsMessage = 
---  where header = packHeader dnsMessage
+packMessage :: DNSMessage -> ByteString
+packMessage dnsMessage = headerRaw
+  where headerRaw = packHeader (header dnsMessage)
 
 
 {-|
@@ -43,8 +43,8 @@ parseMessage rawMessage = DNSMessage{
 --   |                    ARCOUNT                    |
 --   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 |-}
-parseHeader :: ByteString -> DNSHeader
-parseHeader bytes = DNSHeader{
+unpackHeader :: ByteString -> DNSHeader
+unpackHeader bytes = DNSHeader{
     identifier = combineWords [firstByte, secondByte],
     qr = getQR thirdByte,
     opcode = getOpCode thirdByte,
@@ -59,50 +59,97 @@ parseHeader bytes = DNSHeader{
     nscount = combineWords [ninethByte, tenthByte],
     arcount = combineWords [eleventhByte, twelfthByte]
 }
-  where firstByte = index bytes 0
-        secondByte = index bytes 1
-        thirdByte = index bytes 2
-        fouthByte = index bytes 3
-        fifthByte = index bytes 4
-        sixthByte = index bytes 5
-        seventhByte = index bytes 6
-        eighthByte = index bytes 7
-        ninethByte = index bytes 8
-        tenthByte = index bytes 9
-        eleventhByte = index bytes 10
-        twelfthByte = index bytes 11
+  where firstByte = case indexMaybe bytes 0 of
+                      (Just x)  -> x
+                      Nothing   -> 0
+        secondByte = case indexMaybe bytes 1 of
+                      (Just x)  -> x
+                      Nothing   -> 0
+        thirdByte = case indexMaybe bytes 2 of
+                      (Just x)  -> x
+                      Nothing   -> 0
+        fouthByte = case indexMaybe bytes 3 of
+                      (Just x)  -> x
+                      Nothing   -> 0
+        fifthByte = case indexMaybe bytes 4 of
+                      (Just x)  -> x
+                      Nothing   -> 0
+        sixthByte = case indexMaybe bytes 5 of
+                      (Just x)  -> x
+                      Nothing   -> 0
+        seventhByte = case indexMaybe bytes 6 of
+                      (Just x)  -> x
+                      Nothing   -> 0
+        eighthByte = case indexMaybe bytes 7 of
+                      (Just x)  -> x
+                      Nothing   -> 0
+        ninethByte = case indexMaybe bytes 8 of
+                      (Just x)  -> x
+                      Nothing   -> 0
+        tenthByte = case indexMaybe bytes 9 of
+                      (Just x)  -> x
+                      Nothing   -> 0
+        eleventhByte = case indexMaybe bytes 10 of
+                      (Just x)  -> x
+                      Nothing   -> 0
+        twelfthByte = case indexMaybe bytes 11 of
+                      (Just x)  -> x
+                      Nothing   -> 0
 
-packHeader :: DNSHeader -> String
-packHeader header = "TODO"
+packHeader :: DNSHeader -> ByteString
+packHeader header = pack (identifierWords ++ [firstWord, secondWord] ++ qdcountWord ++ ancountWord ++ nscountWord ++ arcountWord)
+  where identifierWords = encodeWord16 (identifier header)
+        qrWord = 128::Word8
+        opcodeWord = opCodeToID QUERY `shiftL` 3
+        authoritativeAnswerWord = 0::Word8
+        truncatedMessageWord = 0::Word8
+        recursionDesiredWord = if recursionDesired header then 1 else 0
+        firstWord = qrWord + opcodeWord + authoritativeAnswerWord + truncatedMessageWord + recursionDesiredWord
+        recursionAvailableWord = 128::Word8
+        zWord = 0::Word8
+        rcCodeWord = rCodeToId NO_ERROR
+        secondWord = recursionAvailableWord + zWord + rcCodeWord
+        qdcountWord = encodeWord16 (qdcount header)
+        ancountWord = encodeWord16 (1::Word16)
+        nscountWord = encodeWord16 (0::Word16)
+        arcountWord = encodeWord16 (0::Word16)
 
-parseQuestions :: Word16 -> ByteString -> [DNSQuestion]
-parseQuestions 0 bytes = []
-parseQuestions n bytes = case parseQuestion bytes of
-                          (Just question) -> question : (parseQuestions (n-1) bytes)
+unpackQuestions :: Word16 -> ByteString -> [DNSQuestion]
+unpackQuestions 0 bytes = []
+unpackQuestions n bytes = case unpackQuestion bytes of
+                          (Just question) -> question : (unpackQuestions (n-1) bytes)
                           Nothing         -> []
   where count = fromIntegral n
 
-packQuestions :: [DNSQuestion] -> String
-packQuestions questions = Prelude.foldl (\pack question -> pack ++ packQuestion question) "" questions
-
-parseQuestion :: ByteString -> Maybe DNSQuestion
-parseQuestion bytes = Just (DNSQuestion{
+unpackQuestion :: ByteString -> Maybe DNSQuestion
+unpackQuestion bytes = Just (DNSQuestion{
   qname = getName domainBytes,
   qtype = qtype,
   qclass = qclass
 })
   where (domainBytes, rest) = C.span (/= '\NUL') bytes
-        firstByte = index (C.tail rest) 0
-        secondByte = index (C.tail rest) 1
-        thirdByte = index (C.tail rest) 2
-        fouthByte = index (C.tail rest) 3
+        firstByte = case indexMaybe (C.tail rest) 0 of
+                      (Just x)  -> x
+                      Nothing   -> 0
+        secondByte = case indexMaybe (C.tail rest) 1 of
+                      (Just x)  -> x
+                      Nothing   -> 0
+        thirdByte = case indexMaybe (C.tail rest) 2 of
+                      (Just x)  -> x
+                      Nothing   -> 0
+        fouthByte = case indexMaybe (C.tail rest) 3 of
+                      (Just x)  -> x
+                      Nothing   -> 0
         qtype = getQType [firstByte, secondByte]
         qclass = getQClass [thirdByte, fouthByte]
+
+packQuestions :: [DNSQuestion] -> String
+packQuestions questions = Prelude.foldl (\pack question -> pack ++ packQuestion question) "" questions
 
 packQuestion :: DNSQuestion -> String
 packQuestion question = "TODO"
 
---parseResources :: ByteString -> (DNSQuestion, DNSResource, DNSResource, DNSResource)
---parseResources _ = (DNSQuestion{}, DNSResource{}, DNSResource{}, DNSResource{})
+--unpackResources :: ByteString -> (DNSQuestion, DNSResource, DNSResource, DNSResource)
+--unpackResources _ = (DNSQuestion{}, DNSResource{}, DNSResource{}, DNSResource{})
 -- print (C.unpack message)
 

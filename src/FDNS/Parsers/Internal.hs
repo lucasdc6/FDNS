@@ -1,8 +1,12 @@
 module FDNS.Parsers.Internal where
 
 import Data.Bits
-import Data.Word
-import Data.ByteString hiding (head, foldl)
+import Data.Word                            (Word8, Word16)
+import Data.Text as T                       (pack)
+import Data.ByteString                      (ByteString, unpack, indexMaybe)
+import Data.Text.Encoding                   (encodeUtf8)
+import Data.ByteString.Builder              (toLazyByteString, word16BE)
+import qualified Data.ByteString.Lazy as L  (unpack)
 import qualified Data.ByteString.Char8 as C (splitAt, foldl, span, tail)
 import FDNS.Types
 
@@ -47,7 +51,9 @@ transformQName domain byte
 -- TODO Add support for Sequence with pointers
 compressionFormat :: ByteString -> COMPRESSION_FORMAT
 compressionFormat bytes = if testBit word 6 && testBit word 7 then POINTER else SEQUENCE
-  where word = index bytes 0
+  where word = case indexMaybe bytes 0 of
+                  (Just x)  -> x
+                  Nothing   -> 0
 
 getName :: ByteString -> String
 getName bytes = case compressionFormat bytes of
@@ -56,4 +62,10 @@ getName bytes = case compressionFormat bytes of
 
 combineWords :: [Word8] -> Word16
 combineWords [] = 0
-combineWords (x:xs) = (fromIntegral x `Data.Bits.shiftL` 8) + fromIntegral (head xs)
+combineWords (x:xs) = (fromIntegral x `shiftL` 8) + fromIntegral (head xs)
+
+encodeWord16 :: Word16 -> [Word8]
+encodeWord16 = L.unpack . toLazyByteString . word16BE
+
+utf8ToBytes :: String -> [Word8]
+utf8ToBytes = unpack . encodeUtf8 . T.pack
