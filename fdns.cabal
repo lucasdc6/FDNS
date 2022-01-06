@@ -24,16 +24,24 @@ cabal-version:       >=1.10
 
 library
   -- Modules exported by the library.
-  exposed-modules:    FDNS.Server, FDNS.Types
+  exposed-modules:    FDNS.Server
+                    , FDNS.Types
 
   -- Modules included in this library but not exported.
-  other-modules:      FDNS.Commands, FDNS.Parsers.Internal, FDNS.Parsers.Parsers
+  other-modules:      FDNS.Commands
+                    , FDNS.Parsers.Internal
+                    , FDNS.Parsers.Parsers
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends:       network, utf8-string, bytestring >= 0.11.0.0, text, base >=4.13 && <4.15
+  build-depends:      base >=4.13 && <4.15
+                    , bytestring >= 0.11.0.0
+                    , hspec
+                    , network
+                    , text
+                    , utf8-string
 
   -- Directories containing source files.
   hs-source-dirs:      src
@@ -47,13 +55,22 @@ executable fdns
   main-is:             Main.hs
 
   -- Modules included in this executable, other than Main.
-  other-modules:      FDNS.Server, FDNS.Types, FDNS.Commands, FDNS.Parsers.Internal, FDNS.Parsers.Parsers
+  other-modules:      FDNS.Server
+                    , FDNS.Types
+                    , FDNS.Commands
+                    , FDNS.Parsers.Internal
+                    , FDNS.Parsers.Parsers
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends:       network, utf8-string, bytestring >= 0.11.0.0, text, base >=4.13 && <4.15
+  build-depends:      base >=4.13 && <4.15
+                    , bytestring >= 0.11.0.0
+                    , hspec
+                    , network
+                    , text
+                    , utf8-string
 
   -- Directories containing source files.
   hs-source-dirs:      src
