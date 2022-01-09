@@ -16,7 +16,7 @@ runUDPServer host port = do
   bind sock (addrAddress serveraddr)
   print ("UDP server is waiting at " ++ host ++ ":" ++ port)
   forever $ do
-    (rawMessage, sockAddr) <- recvFrom sock 512
+    (rawMessage, sockAddr) <- recvFrom sock 4096
     print "Header: "
     print (BS.unpack (BS.take 12 rawMessage))
     print (BS.take 12 rawMessage)
@@ -29,8 +29,11 @@ runUDPServer host port = do
     let response = packMessage message
     print "Response: "
     print response
-    -- let testMessage = parseMessage response
-    -- print "Response parsed: "
-    -- print testMessage
+    print "Response body:"
+    print (BS.unpack (BS.drop 12 response))
+    print (BS.drop 12 response)
+    let testMessage = unpackMessage response
+    print "Response parsed: "
+    print testMessage
     sendAllTo sock response sockAddr
 

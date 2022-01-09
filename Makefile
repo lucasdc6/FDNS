@@ -6,6 +6,9 @@ build:
 run:
 	cabal run -- fdns -p 9053
 
+console:
+	cabal repl
+
 docker:
 	docker build -t fdns:dev -f docker/Dockerfile .
 

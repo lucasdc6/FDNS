@@ -44,9 +44,10 @@ getQClass words = case idToQClass (combineWords words) of
 
 transformQName :: String -> Char -> String
 transformQName domain byte
-  | byte == '\ACK' = domain
-  | byte == '\ETX' = domain ++ "."
-  | otherwise      = domain ++ [byte]
+  | byte > '\ETX' && byte < '\LF'   = domain
+  | byte == '\ETX'                  = domain ++ "."
+  | byte == '\STX'                  = domain ++ "."
+  | otherwise                       = domain ++ [byte]
 
 -- TODO Add support for Sequence with pointers
 compressionFormat :: ByteString -> COMPRESSION_FORMAT
