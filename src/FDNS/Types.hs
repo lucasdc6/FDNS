@@ -266,3 +266,22 @@ data DNSMessage = DNSMessage {
 instance Ord DNSMessage where
   compare (DNSMessage h1 _ _ _ _) (DNSMessage h2 _ _ _ _) = compare h1 h2
 
+appendAnswer :: DNSMessage -> DNSResource -> DNSMessage
+appendAnswer (DNSMessage header question answer authority additional) resource = DNSMessage {
+  header = header,
+  question = question,
+  answer = answer ++ [resource],
+  authority = authority,
+  additional = additional
+}
+
+appendAdditional :: DNSMessage -> DNSResource -> DNSMessage
+appendAdditional (DNSMessage header question answer authority additional) resource = DNSMessage {
+  header = header,
+  question = question,
+  answer = answer,
+  authority = authority,
+  additional = additional ++ [resource]
+}
+
+

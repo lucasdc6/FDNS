@@ -37,9 +37,11 @@ library
 
   -- Other library packages from which modules are imported.
   build-depends:      base
-                    , bytestring >= 0.11.0.0
+                    , bytestring
+                    , bytestring-conversion
                     , hspec
                     , network
+                    , split
                     , text
                     , utf8-string
 
@@ -66,9 +68,11 @@ executable fdns
 
   -- Other library packages from which modules are imported.
   build-depends:      base
-                    , bytestring >= 0.11.0.0
+                    , bytestring
+                    , bytestring-conversion
                     , hspec
                     , network
+                    , split
                     , text
                     , utf8-string
 

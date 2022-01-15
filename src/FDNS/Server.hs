@@ -1,11 +1,12 @@
 module FDNS.Server where
 
-import Control.Monad             (forever)
-import Network.Socket            (getAddrInfo, socket, addrAddress, addrFamily, bind, defaultProtocol, SocketType(Datagram))
-import Network.Socket.ByteString (recvFrom, sendAllTo)
-import Data.ByteString as BS     (unpack, take, drop)
+import Data.Word                  (Word16, Word32)
+import Control.Monad              (forever)
+import Network.Socket             (getAddrInfo, socket, addrAddress, addrFamily, bind, defaultProtocol, SocketType(Datagram))
+import Data.ByteString as BS      (unpack, take, drop)
+import Network.Socket.ByteString  (recvFrom, sendAllTo)
 
-
+import FDNS.Types
 import FDNS.Parsers.Parsers
 
 runUDPServer :: String -> String -> IO ()
@@ -26,7 +27,18 @@ runUDPServer host port = do
     let message = unpackMessage rawMessage
     print "Message: "
     print message
-    let response = packMessage message
+    let answer = DNSResource {
+      rname = ".google.com",
+      rtype = A,
+      rclass = IN,
+      ttl = 300::Word32,
+      rdlength = 4::Word16,
+      rdata = "172.17.0.2"
+    }
+    let message' = appendAnswer message answer
+    print "Message': "
+    print message'
+    let response = packMessage message'
     print "Response: "
     print response
     print "Response body:"
