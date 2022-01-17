@@ -275,13 +275,78 @@ appendAnswer (DNSMessage header question answer authority additional) resource =
   additional = additional
 }
 
+questionSize :: DNSQuestion -> Int
+questionSize question = length (qname question) +
+                        1 +
+                        -- QTYPE size
+                        2 +
+                        -- QCLASS size
+                        2
+
+resourceSize :: DNSResource -> Int
+resourceSize resource = length (rname resource) +
+                        1 +
+                        -- QTYPE size
+                        2 +
+                        -- QCLASS size
+                        2 +
+                        -- TTL size
+                        4 +
+                        -- RDLENGTH size
+                        2 +
+                        -- RDATA size
+                        fromIntegral (rdlength resource)
+
+setQueryResponse :: DNSMessage -> DNSMessage
+setQueryResponse
+  (DNSMessage
+    (DNSHeader
+      identifier
+      qr
+      opcode
+      authoritativeAnswer
+      truncatedMessage
+      recursionDesired
+      recursionAvailable
+      z
+      rccode
+      qdcount
+      ancount
+      nscount
+      arcount
+    )
+    question
+    answer
+    authority
+    additional
+  ) = DNSMessage {
+        header = DNSHeader {
+          identifier          = identifier,
+          qr                  = True,
+          opcode              = opcode,
+          authoritativeAnswer = authoritativeAnswer,
+          truncatedMessage    = truncatedMessage,
+          recursionDesired    = recursionDesired,
+          recursionAvailable  = recursionAvailable,
+          z                   = z,
+          rccode              = rccode,
+          qdcount             = qdcount,
+          ancount             = ancount,
+          nscount             = nscount,
+          arcount             = arcount
+        },
+        question = question,
+        answer = answer,
+        authority = authority,
+        additional = additional
+      }
+
 appendAdditional :: DNSMessage -> DNSResource -> DNSMessage
 appendAdditional (DNSMessage header question answer authority additional) resource = DNSMessage {
-  header = header,
-  question = question,
-  answer = answer,
-  authority = authority,
-  additional = additional ++ [resource]
+  header      = header,
+  question    = question,
+  answer      = answer,
+  authority   = authority,
+  additional  = additional ++ [resource]
 }
-
 

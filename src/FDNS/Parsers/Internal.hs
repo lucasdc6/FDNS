@@ -2,13 +2,13 @@ module FDNS.Parsers.Internal where
 
 import Data.Bits
 import Data.Word                            (Word8, Word16, Word32)
-import Data.Text as T                       (pack, unpack)
+import Data.Text as T                       (pack)
 import Data.Char                            (chr)
 import Data.Text.Encoding                   (encodeUtf8)
 import Data.ByteString.Builder              (toLazyByteString, word16BE, word32BE)
 import qualified Data.ByteString as BS      (ByteString, unpack, index, length)
 import qualified Data.ByteString.Lazy as L  (unpack)
-import qualified Data.ByteString.Char8 as C (splitAt, foldl, span, tail)
+import qualified Data.ByteString.Char8 as C (foldl)
 import FDNS.Types
 
 getQR :: Word8 -> Bool
@@ -46,7 +46,7 @@ getQClass words = case idToQClass (combineWords words) of
 transformQName :: String -> Char -> String
 transformQName domain byte
   -- | byte > '\ETX' && byte < '\LF'   = domain
-  | byte >= '\SOH' && byte <= '?'     = domain ++ "."
+  | byte >= '\NUL' && byte <= '?'     = domain ++ "."
   | otherwise                       = domain ++ [byte]
 
 transformQName' :: String -> String -> String
