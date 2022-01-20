@@ -1,7 +1,6 @@
 module FDNS.Server where
 
 import Data.Word                  (Word16, Word32)
-import Data.Maybe                 (fromMaybe)
 import Control.Monad              (forever)
 import Network.Socket             (getAddrInfo, socket, addrAddress, addrFamily, bind, defaultProtocol, SocketType(Datagram))
 import Data.ByteString as BS      (unpack, take, drop)
@@ -9,11 +8,15 @@ import Network.Socket.ByteString  (recvFrom, sendAllTo)
 import Colog                      ((<&), logStringStdout)
 
 import FDNS.Types
-import FDNS.Config as C
-import FDNS.Parsers.Parsers
+import FDNS.Utils
+import FDNS.Config as FC
+import FDNS.Parsers.Pack
+import FDNS.Parsers.Unpack
 
 runUDPServer :: String -> String -> IO ()
 runUDPServer host port = do
+  config <- FC.readConfig "./config/simple.yaml"
+  let lookupConfig = FC.lookup config
   let logger = logStringStdout
   addrinfos <- getAddrInfo Nothing (Just host) (Just port)
   let serveraddr = Prelude.head addrinfos
@@ -29,16 +32,12 @@ runUDPServer host port = do
     let message = unpackMessage rawMessage
     logger <& ("Message: " ++ show message)
     let question' = head (question message)
-    let record = C.lookup (qname question') (qtype question')
-    let answer = DNSResource {
-      rname = ".google.com",
-      rtype = A,
-      rclass = IN,
-      ttl = 300::Word32,
-      rdlength = 4::Word16,
-      rdata = value (fromMaybe Domain{} record)
-    }
-    let message' = setQueryResponse (appendAnswer message answer)
+    let records = lookupConfig (qname question') (show (qtype question'))
+    let recordToResource' = recordToResource (qname question') (qtype question')
+    logger <& ("Records: " ++ show records)
+    let answers = map recordToResource' records
+    logger <& ("Answers: " ++ show answers)
+    let message' = message <<! answers
     logger <& ("Message': " ++ show message')
     let response = packMessage message'
     logger <& ("Response: " ++ show response)

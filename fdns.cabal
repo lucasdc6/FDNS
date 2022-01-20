@@ -25,13 +25,15 @@ cabal-version:       >=1.10
 library
   -- Modules exported by the library.
   exposed-modules:    FDNS.Server
-                    , FDNS.Config
                     , FDNS.Types
+                    , FDNS.Utils
+                    , FDNS.Config
 
   -- Modules included in this library but not exported.
   other-modules:      FDNS.Commands
+                    , FDNS.Parsers.Pack
+                    , FDNS.Parsers.Unpack
                     , FDNS.Parsers.Internal
-                    , FDNS.Parsers.Parsers
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
@@ -46,6 +48,7 @@ library
                     , split
                     , text
                     , utf8-string
+                    , yaml
 
   -- Directories containing source files.
   hs-source-dirs:      src
@@ -61,10 +64,12 @@ executable fdns
   -- Modules included in this executable, other than Main.
   other-modules:      FDNS.Server
                     , FDNS.Types
+                    , FDNS.Utils
                     , FDNS.Config
                     , FDNS.Commands
+                    , FDNS.Parsers.Pack
+                    , FDNS.Parsers.Unpack
                     , FDNS.Parsers.Internal
-                    , FDNS.Parsers.Parsers
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
@@ -79,6 +84,7 @@ executable fdns
                     , split
                     , text
                     , utf8-string
+                    , yaml
 
   -- Directories containing source files.
   hs-source-dirs:      src
