@@ -1,6 +1,6 @@
 module FDNS.Parsers.Internal where
 
-import Data.Bits
+import Data.Bits                            (shiftL, testBit)
 import Data.Word                            (Word8, Word16, Word32)
 import Data.Text as T                       (pack)
 import Data.Char                            (chr)
@@ -9,48 +9,16 @@ import Data.ByteString.Builder              (toLazyByteString, word16BE, word32B
 import qualified Data.ByteString as BS      (ByteString, unpack, index, length)
 import qualified Data.ByteString.Lazy as L  (unpack)
 import qualified Data.ByteString.Char8 as C (foldl)
+
 import FDNS.Types
 
-getQR :: Word8 -> Bool
-getQR byte = testBit byte 7
-
--- Get operation code from the byte
--- Mask set to
--- 0111 1000
-getOpCode :: Word8 -> OPCODE
-getOpCode byte = idToOpCode (byte .&. 120)
-
-getAA :: Word8 -> Bool
-getAA byte = testBit byte 2
-
-getTC :: Word8 -> Bool
-getTC byte = testBit byte 1
-
-getRD :: Word8 -> Bool
-getRD byte = testBit byte 0
-
-getRCode :: Word8 -> RCODE
-getRCode byte = idToRCode (byte .&. 15)
-
-getQType :: [Word8] -> QTYPE
-getQType words = case idToQType (combineWords words) of
-                  (Just x)  -> x
-                  Nothing   -> NULL
-
-
-getQClass :: [Word8] -> QCLASS
-getQClass words = case idToQClass (combineWords words) of
-                      (Just x)  -> x
-                      Nothing   -> IN
-
-transformQName :: String -> Char -> String
-transformQName domain byte
-  -- | byte > '\ETX' && byte < '\LF'   = domain
+unpackQName :: String -> Char -> String
+unpackQName domain byte
   | byte >= '\NUL' && byte <= '?'     = domain ++ "."
   | otherwise                       = domain ++ [byte]
 
-transformQName' :: String -> String -> String
-transformQName' domain label = domain ++ [chr (length label)] ++ label
+packQName :: String -> String -> String
+packQName domain label = domain ++ [chr (length label)] ++ label
 
 -- TODO Add support for Sequence with pointers
 compressionFormat :: BS.ByteString -> COMPRESSION_FORMAT
@@ -62,7 +30,7 @@ compressionFormat bytes = if testBit word 6 && testBit word 7 then POINTER else 
 getName :: BS.ByteString -> String
 getName bytes = case compressionFormat bytes of
                   POINTER -> "TODO"
-                  SEQUENCE -> C.foldl transformQName "" bytes
+                  SEQUENCE -> C.foldl unpackQName "" bytes
 
 combineWords :: [Word8] -> Word16
 combineWords [] = 0

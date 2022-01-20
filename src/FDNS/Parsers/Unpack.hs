@@ -1,15 +1,15 @@
-module FDNS.Parsers.Parsers where
+module FDNS.Parsers.Unpack where
 
-import Data.Bits                            (shiftL)
-import Data.Word                            (Word8, Word16)
+import Data.Word                            (Word16)
 import Data.Char                            (chr)
 import Data.List                            (intersperse)
-import Data.List.Split                      (splitOn)
 import Data.Maybe                           (fromMaybe)
-import qualified Data.ByteString as BS      (ByteString, append, concat, drop, pack, empty, take, unpack)
+import qualified Data.ByteString as BS      (ByteString, drop, take, unpack)
 import qualified Data.ByteString.Char8 as C (tail)
-import qualified Data.ByteString.UTF8 as U  (splitAt, span, fromString)
+import qualified Data.ByteString.UTF8 as U  (splitAt, span)
+
 import FDNS.Types
+import FDNS.Utils
 import FDNS.Parsers.Internal
 
 
@@ -45,15 +45,6 @@ unpackMessage rawMessage = DNSMessage{
         authorities       = unpackResources (nscount header) (BS.drop answersOffset bodyBytes)
         authorityOffset   = quesrtionsOffset + answersOffset + (foldl (\acc q -> acc + resourceSize q) 0 authorities)
         additionals       = unpackResources (arcount header) (BS.drop answersOffset bodyBytes)
-
-packMessage :: DNSMessage -> BS.ByteString
-packMessage dnsMessage  = BS.concat [headerRaw, questionsRaw, answersRaw, authorityRaw, additionalRaw]
-  where headerRaw       = packHeader (header dnsMessage)
-        questionsRaw    = packQuestions (question dnsMessage)
-        answersRaw      = packResoureces (answer dnsMessage)
-        authorityRaw    = packResoureces (authority dnsMessage)
-        additionalRaw   = packResoureces (additional dnsMessage)
-
 
 {-|
 -- Header formatmap
@@ -104,24 +95,6 @@ unpackHeader bytes = DNSHeader{
         twelfthByte     = indexMaybe bytes 11
         maybeBytes      = [firstByte, secondByte, thirdByte, fouthByte, fifthByte, sixthByte, seventhByte, eighthByte, ninethByte, tenthByte, eleventhByte, twelfthByte]
 
-packHeader :: DNSHeader -> BS.ByteString
-packHeader header = BS.pack (identifierWords ++ [firstWord, secondWord] ++ qdcountWord ++ ancountWord ++ nscountWord ++ arcountWord)
-  where identifierWords         = encodeWord16 (identifier header)
-        qrWord                  = if qr header then 128::Word8 else 0::Word8
-        opcodeWord              = opCodeToID (opcode header) `shiftL` 3
-        authoritativeAnswerWord = if authoritativeAnswer header then 4::Word8 else 0::Word8
-        truncatedMessageWord    = if truncatedMessage header then 2::Word8 else 0::Word8
-        recursionDesiredWord    = if recursionDesired header then 1 else 0
-        firstWord               = qrWord + opcodeWord + authoritativeAnswerWord + truncatedMessageWord + recursionDesiredWord
-        recursionAvailableWord  = if recursionAvailable header then 128::Word8 else 0::Word8
-        zWord                   = 0::Word8
-        rcCodeWord              = rCodeToId (rccode header)
-        secondWord              = recursionAvailableWord + zWord + rcCodeWord
-        qdcountWord             = encodeWord16 (qdcount header)
-        ancountWord             = encodeWord16 (1::Word16)
-        nscountWord             = encodeWord16 (0::Word16)
-        arcountWord             = encodeWord16 (0::Word16)
-
 unpackQuestions :: Word16 -> BS.ByteString -> [DNSQuestion]
 unpackQuestions 0 bytes = []
 unpackQuestions n bytes = case unpackQuestion bytes of
@@ -158,16 +131,6 @@ unpackQuestion bytes =  if elem Nothing maybeBytes
         thirdByte   = indexMaybe (C.tail rest) 2
         fouthByte   = indexMaybe (C.tail rest) 3
         maybeBytes  = [firstByte, secondByte, thirdByte, fouthByte]
-
-packQuestions :: [DNSQuestion] -> BS.ByteString
-packQuestions questions = foldl (\pack question -> BS.append pack (packQuestion question)) BS.empty questions
-
-packQuestion :: DNSQuestion -> BS.ByteString
-packQuestion question = BS.concat [qnameBS, qtypeBS, qclassBS]
-  where labels   = drop 1 (splitOn "." (qname question))
-        qnameBS  = U.fromString ((foldl transformQName' "" labels) ++ "\NUL")
-        qtypeBS  = BS.pack (encodeWord16 (qtypeToID (qtype question)))
-        qclassBS = BS.pack (encodeWord16 (qclassToID (qclass question)))
 
 unpackResources :: Word16 -> BS.ByteString -> [DNSResource]
 unpackResources 0 bytes = []
@@ -224,17 +187,4 @@ unpackResource bytes =  if elem Nothing maybeBytes
         tenthByte   = indexMaybe (C.tail rest) 9
         rdataBytes  = map (\byte -> chr (fromIntegral byte)) (BS.unpack (BS.take 4 (BS.drop 10 rest)))
         maybeBytes  = [firstByte, secondByte, thirdByte, fouthByte]
-
-packResoureces :: [DNSResource] -> BS.ByteString
-packResoureces resources = foldl (\pack resource -> BS.append pack (packResourece resource)) BS.empty resources
-
-packResourece :: DNSResource -> BS.ByteString
-packResourece resource = BS.concat [nameBS, typeBS, classBS, ttlBS, rdlengthBS, rdataBS]
-  where labels      = drop 1 (splitOn "." (rname resource))
-        nameBS      = U.fromString ((foldl transformQName' "" labels) ++ "\NUL")
-        typeBS      = BS.pack (encodeWord16 (qtypeToID (rtype resource)))
-        classBS     = BS.pack (encodeWord16 (qclassToID (rclass resource)))
-        ttlBS       = BS.pack (encodeWord32 (ttl resource))
-        rdlengthBS  = BS.pack (encodeWord16 (rdlength resource))
-        rdataBS     = BS.pack (map (\str -> read str :: Word8) (splitOn "." (rdata resource)))
 
