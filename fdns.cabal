@@ -41,7 +41,7 @@ library
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends:      base
+  build-depends:      base >=4.10.1.0 && <4.15
                     , bytestring
                     , co-log
                     , co-log-core
@@ -78,7 +78,7 @@ executable fdns
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends:      base
+  build-depends:      base >=4.10.1.0 && <4.15
                     , bytestring
                     , co-log
                     , co-log-core
@@ -106,7 +106,7 @@ test-suite spec
   hs-source-dirs:       tests
 
   -- Other library packages from which modules are imported.
-  build-depends:      base
+  build-depends:      base >=4.10.1.0 && <4.15
                     , bytestring
                     , fdns
                     , hspec
