@@ -15,3 +15,5 @@ docker:
 docker-run:
 	docker run --rm -it --network host fdns:dev
 
+test:
+	cabal test
