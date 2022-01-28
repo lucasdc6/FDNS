@@ -14,12 +14,6 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: Run setup Haskell
-        uses: actions/setup-haskell@v1.1
-        with:
-          ghc-version: '8.10'
-          cabal-version: '3.0.0.0'
-
       - name: Run Haskell Tests
         uses: sol/run-haskell-tests@v1
 
