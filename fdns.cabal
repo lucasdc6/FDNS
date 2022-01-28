@@ -28,12 +28,14 @@ library
                     , FDNS.Types
                     , FDNS.Utils
                     , FDNS.Config
+                    , FDNS.Parsers.Pack
+                    , FDNS.Parsers.Unpack
 
   -- Modules included in this library but not exported.
   other-modules:      FDNS.Commands
-                    , FDNS.Parsers.Pack
-                    , FDNS.Parsers.Unpack
-                    , FDNS.Parsers.Internal
+                    , FDNS.Parsers.Internal.Pack
+                    , FDNS.Parsers.Internal.Utils
+                    , FDNS.Parsers.Internal.Unpack
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
@@ -43,7 +45,6 @@ library
                     , bytestring
                     , co-log
                     , co-log-core
-                    , hspec
                     , network
                     , split
                     , text
@@ -69,7 +70,9 @@ executable fdns
                     , FDNS.Commands
                     , FDNS.Parsers.Pack
                     , FDNS.Parsers.Unpack
-                    , FDNS.Parsers.Internal
+                    , FDNS.Parsers.Internal.Pack
+                    , FDNS.Parsers.Internal.Utils
+                    , FDNS.Parsers.Internal.Unpack
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
@@ -79,7 +82,6 @@ executable fdns
                     , bytestring
                     , co-log
                     , co-log-core
-                    , hspec
                     , network
                     , split
                     , text
@@ -92,3 +94,24 @@ executable fdns
   -- Base language which the package is written in.
   default-language:    Haskell2010
 
+test-suite spec
+  type:                 exitcode-stdio-1.0
+
+  -- .hs or .lhs file containing the Main module.
+  main-is:              Spec.hs
+
+  other-modules:      FDNS.Parsers.PackSpec
+
+  -- Directories containing source files.
+  hs-source-dirs:       tests
+
+  -- Other library packages from which modules are imported.
+  build-depends:      base
+                    , bytestring
+                    , fdns
+                    , hspec
+
+  -- Base language which the package is written in.
+  default-language:     Haskell2010
+
+  build-tool-depends: hspec-discover:hspec-discover == 2.*

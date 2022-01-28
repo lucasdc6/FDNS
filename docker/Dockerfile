@@ -11,5 +11,6 @@ RUN cabal install
 FROM debian:sid-slim
 
 COPY --from=builder /root/.cabal/bin/fdns /usr/local/bin/fdns
+COPY --from=builder /opt/fdns/config/simple.yaml /etc/fdns/fdns.yaml
 ENTRYPOINT ["/usr/local/bin/fdns"]
 CMD ["-p 9053"]

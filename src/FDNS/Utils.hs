@@ -3,7 +3,12 @@ module FDNS.Utils where
 import Data.Bits  ((.&.), testBit)
 import Data.Word  (Word8, Word16)
 import FDNS.Types
-import FDNS.Parsers.Internal
+import FDNS.Parsers.Internal.Utils
+
+qtypeRDataLength :: QTYPE -> Word16
+qtypeRDataLength A    = 4
+qtypeRDataLength AAAA = 16
+qtypeRDataLength _    = 0
 
 qtypeToID :: QTYPE -> Word16
 qtypeToID A           = 1
@@ -103,6 +108,7 @@ rCodeToId NAME_ERROR      = 3
 rCodeToId NOT_IMPLEMENTED = 4
 rCodeToId REFUCER         = 5
 rCodeToId RCODE_OTHER     = 6
+
 idToQType :: Word16 -> Maybe QTYPE
 idToQType 1           = Just A
 idToQType 28          = Just AAAA
@@ -167,14 +173,14 @@ getRD byte = testBit byte 0
 getRCode :: Word8 -> RCODE
 getRCode byte = idToRCode (byte .&. 15)
 
-getQType :: [Word8] -> QTYPE
-getQType words = case idToQType (combineWords words) of
+getQType :: (Word8, Word8) -> QTYPE
+getQType words = case idToQType (combineWords2 words) of
                   (Just x)  -> x
                   Nothing   -> NULL
 
 
-getQClass :: [Word8] -> QCLASS
-getQClass words = case idToQClass (combineWords words) of
+getQClass :: (Word8, Word8) -> QCLASS
+getQClass words = case idToQClass (combineWords2 words) of
                       (Just x)  -> x
                       Nothing   -> IN
 

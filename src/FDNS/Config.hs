@@ -7,6 +7,7 @@ import Data.Word                  (Word16, Word32)
 import Data.Yaml                  (FromJSON(..), (.:), decodeFileEither)
 import Data.List                  (find)
 import FDNS.Types
+import FDNS.Utils
 
 
 data Record = Record {
@@ -62,6 +63,6 @@ recordToResource name rtype record = DNSResource {
     rtype     = rtype,
     rclass    = IN,
     ttl       = recordTTL record,
-    rdlength  = 4::Word16,
+    rdlength  = qtypeRDataLength rtype,
     rdata     = value record
 }

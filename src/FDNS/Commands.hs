@@ -12,15 +12,17 @@ help = do
   putStrLn (usageInfo (commandHeader name) options)
 
 data Options = Options
-  { optConfig :: FilePath
-  , optPort   :: String
-  , optHelp   :: Bool
+  { optConfig       :: FilePath
+  , optBindAddress  :: String
+  , optPort         :: String
+  , optHelp         :: Bool
   } deriving Show
 
 defaultOptions = Options
-  { optConfig = "/etc/fdns/fdns.yaml"
-  , optPort   = "53"
-  , optHelp   = False
+  { optConfig       = "/etc/fdns/fdns.yaml"
+  , optBindAddress  = "0.0.0.0"
+  , optPort         = "53"
+  , optHelp         = False
   }
 
 data Flag = Help | Config String
@@ -35,6 +37,10 @@ options = [ Option
           , Option
               ['c'] ["config"]
               (ReqArg (\config opts -> opts { optConfig = config}) "FILE")
+              "Config file"
+          , Option
+              ['H'] ["host"]
+              (ReqArg (\host opts -> opts { optBindAddress = host}) "HOST")
               "Config file"
           , Option
               ['p'] ["port"]

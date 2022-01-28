@@ -9,15 +9,20 @@ import Colog                      ((<&), logStringStdout)
 
 import FDNS.Types
 import FDNS.Utils
+import FDNS.Commands
 import FDNS.Config as FC
 import FDNS.Parsers.Pack
 import FDNS.Parsers.Unpack
 
-runUDPServer :: String -> String -> IO ()
-runUDPServer host port = do
-  config <- FC.readConfig "./config/simple.yaml"
-  let lookupConfig = FC.lookup config
+runUDPServer :: Options -> IO ()
+runUDPServer options = do
   let logger = logStringStdout
+  let host = optBindAddress options
+  let port = optPort options
+  let configFile = optConfig options
+  logger <& ("Load config file from \"" ++ configFile ++ "\"")
+  config <- FC.readConfig configFile
+  let lookupConfig = FC.lookup config
   addrinfos <- getAddrInfo Nothing (Just host) (Just port)
   let serveraddr = Prelude.head addrinfos
   sock <- socket (addrFamily serveraddr) Datagram defaultProtocol
@@ -25,10 +30,10 @@ runUDPServer host port = do
   logger <& ("UDP server is waiting at " ++ host ++ ":" ++ port)
   forever $ do
     (rawMessage, sockAddr) <- recvFrom sock 4096
-    logger <& ("Header: " ++ show (BS.unpack (BS.take 12 rawMessage)))
-    logger <& ("Body: " ++ show (BS.take 12 rawMessage))
-    logger <& ("Raw message: " ++ show (BS.unpack (BS.drop 12 rawMessage)))
-    logger <& ("Raw body: " ++ show (BS.drop 12 rawMessage))
+    --logger <& ("Header: " ++ show (BS.unpack (BS.take 12 rawMessage)))
+    --logger <& ("Body: " ++ show (BS.take 12 rawMessage))
+    --logger <& ("Raw message: " ++ show (BS.unpack (BS.drop 12 rawMessage)))
+    --logger <& ("Raw body: " ++ show (BS.drop 12 rawMessage))
     let message = unpackMessage rawMessage
     logger <& ("Message: " ++ show message)
     let question' = head (question message)
@@ -40,9 +45,10 @@ runUDPServer host port = do
     let message' = message <<! answers
     logger <& ("Message': " ++ show message')
     let response = packMessage message'
-    logger <& ("Response: " ++ show response)
+    logger <& show (BS.unpack (packMessage message))
+    --logger <& ("Response: " ++ show response)
     logger <& ("Response body: " ++ show (BS.unpack (BS.drop 12 response)))
-    logger <& show (BS.drop 12 response)
+    --logger <& show (BS.drop 12 response)
     let testMessage = unpackMessage response
     logger <& ("Response parsed: " ++ show testMessage)
     sendAllTo sock response sockAddr

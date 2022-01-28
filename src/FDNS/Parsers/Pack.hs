@@ -8,7 +8,8 @@ import qualified Data.ByteString.UTF8 as U  (fromString)
 
 import FDNS.Types
 import FDNS.Utils
-import FDNS.Parsers.Internal
+import FDNS.Parsers.Internal.Pack
+import FDNS.Parsers.Internal.Utils
 
 
 packMessage :: DNSMessage -> BS.ByteString
@@ -59,5 +60,5 @@ packResourece resource = BS.concat [nameBS, typeBS, classBS, ttlBS, rdlengthBS, 
         classBS     = BS.pack (encodeWord16 (qclassToID (rclass resource)))
         ttlBS       = BS.pack (encodeWord32 (ttl resource))
         rdlengthBS  = BS.pack (encodeWord16 (rdlength resource))
-        rdataBS     = BS.pack (map (\str -> read str :: Word8) (splitOn "." (rdata resource)))
+        rdataBS     = packRData (rtype resource) (rdata resource)
 

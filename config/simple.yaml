@@ -1,14 +1,28 @@
 domains:
-  - name: .google.com
+  - name: .example.com
     records:
       - type: A
-        value: 127.0.0.1
+        value: 172.2.2.1
         ttl: 300
       - type: A
-        value: 127.0.0.2
+        value: 172.2.2.2
         ttl: 300
-  - name: .facebook.com
+      - type: AAAA
+        value: 2800:03f0:4002:0813:0000:0000:0000:200e
+        ttl: 300
+      - type: AAAA
+        value: 2800:03f0:4002:0813:0000:0000:0000:200f
+        ttl: 300
+      - type: MX
+        value: 20 .mx.example.com
+        ttl: 300
+  - name: .mx.example.com
     records:
       - type: A
-        value: 127.1.0.1
+        value: 172.2.2.3
+        ttl: 300
+  - name: .example.com.ar
+    records:
+      - type: A
+        value: 172.3.2.1
         ttl: 300
