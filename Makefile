@@ -16,4 +16,4 @@ docker-run:
 	docker run --rm -it --network host fdns:dev
 
 test:
-	cabal test
+	cabal test all --test-show-details=direct

@@ -16,5 +16,8 @@ jobs:
       - name: Haskell Linter
         uses: domdere/haskell-lint-action@v1.0.2
 
+      - name: Run Haskell Tests
+        uses: sol/run-haskell-tests@v1
+
       - name: Haskell Autotag
         uses: sol/haskell-autotag@v1
