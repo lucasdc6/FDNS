@@ -5,7 +5,6 @@ import Data.Char                            (chr)
 import Data.List                            (intersperse)
 import Data.Maybe                           (fromMaybe)
 import qualified Data.ByteString as BS      (ByteString, drop, take, unpack)
-import qualified Data.ByteString.Char8 as C (tail)
 import qualified Data.ByteString.UTF8 as U  (splitAt, span)
 
 import FDNS.Types
@@ -99,8 +98,8 @@ unpackHeader bytes = DNSHeader{
 unpackQuestions :: Word16 -> BS.ByteString -> [DNSQuestion]
 unpackQuestions 0 bytes = []
 unpackQuestions n bytes = case unpackQuestion bytes of
-                          (Just question) -> question : (unpackQuestions (n-1) bytes)
-                          Nothing         -> []
+                          (Just question, bytes') -> question : (unpackQuestions (n-1) bytes')
+                          (Nothing, _)            -> []
   where count = fromIntegral n
 
 {-|
@@ -118,19 +117,19 @@ unpackQuestions n bytes = case unpackQuestion bytes of
 --   |                     QCLASS                    |
 --   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 |-}
-unpackQuestion :: BS.ByteString -> Maybe DNSQuestion
+unpackQuestion :: BS.ByteString -> (Maybe DNSQuestion, BS.ByteString)
 unpackQuestion bytes =  if elem Nothing maybeBytes
-                        then Nothing
-                        else Just (DNSQuestion{
+                        then (Nothing, bytes)
+                        else (Just (DNSQuestion{
                               qname = getName domainBytes,
                               qtype = getQType (fromMaybe 0 firstByte, fromMaybe 0 secondByte),
                               qclass = getQClass (fromMaybe 0 thirdByte, fromMaybe 0 fouthByte)
-                            })
+                            }), BS.drop 5 rest)
   where (domainBytes, rest) = U.span (/= '\NUL') bytes
-        firstByte   = indexMaybe (C.tail rest) 0
-        secondByte  = indexMaybe (C.tail rest) 1
-        thirdByte   = indexMaybe (C.tail rest) 2
-        fouthByte   = indexMaybe (C.tail rest) 3
+        firstByte   = indexMaybe rest 1
+        secondByte  = indexMaybe rest 2
+        thirdByte   = indexMaybe rest 3
+        fouthByte   = indexMaybe rest 4
         maybeBytes  = [firstByte, secondByte, thirdByte, fouthByte]
 
 unpackResources :: Word16 -> BS.ByteString -> [DNSResource]
@@ -176,16 +175,16 @@ unpackResource bytes =  if elem Nothing maybeBytes
                               rdata = unpackRdata rtype rdataBytes
                             })
   where (domainBytes, rest) = U.span (/= '\NUL') bytes
-        firstByte   = indexMaybe (C.tail rest) 0
-        secondByte  = indexMaybe (C.tail rest) 1
-        thirdByte   = indexMaybe (C.tail rest) 2
-        fouthByte   = indexMaybe (C.tail rest) 3
-        fifthByte   = indexMaybe (C.tail rest) 4
-        sixthByte   = indexMaybe (C.tail rest) 5
-        seventhByte = indexMaybe (C.tail rest) 6
-        eighthByte  = indexMaybe (C.tail rest) 7
-        ninethByte  = indexMaybe (C.tail rest) 8
-        tenthByte   = indexMaybe (C.tail rest) 9
+        firstByte   = indexMaybe rest 1
+        secondByte  = indexMaybe rest 2
+        thirdByte   = indexMaybe rest 3
+        fouthByte   = indexMaybe rest 4
+        fifthByte   = indexMaybe rest 5
+        sixthByte   = indexMaybe rest 6
+        seventhByte = indexMaybe rest 7
+        eighthByte  = indexMaybe rest 8
+        ninethByte  = indexMaybe rest 9
+        tenthByte   = indexMaybe rest 10
         rtype       = getQType (fromMaybe 0 firstByte, fromMaybe 0 secondByte)
         rdataBytes  = BS.drop 11 rest
         maybeBytes  = [firstByte, secondByte, thirdByte, fouthByte]

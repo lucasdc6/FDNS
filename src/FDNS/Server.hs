@@ -24,7 +24,7 @@ runUDPServer options = do
   config <- FC.readConfig configFile
   let lookupConfig = FC.lookup config
   addrinfos <- getAddrInfo Nothing (Just host) (Just port)
-  let serveraddr = Prelude.head addrinfos
+  let serveraddr = head addrinfos
   sock <- socket (addrFamily serveraddr) Datagram defaultProtocol
   bind sock (addrAddress serveraddr)
   logger <& ("UDP server is waiting at " ++ host ++ ":" ++ port)

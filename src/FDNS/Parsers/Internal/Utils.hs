@@ -2,6 +2,7 @@ module FDNS.Parsers.Internal.Utils where
 
 import Data.Bits                            (shiftL, testBit)
 import Data.Word                            (Word8, Word16, Word32)
+import Text.Read                            (readMaybe)
 import Data.Text as T                       (pack)
 import Data.Text.Encoding                   (encodeUtf8)
 import Data.ByteString.Builder              (toLazyByteString, word16BE, word32BE)
@@ -26,6 +27,13 @@ combineWords4 (b1, b2, b3, b4) = (fromIntegral b1 `shiftL` 24) +
                                 (fromIntegral b2 `shiftL` 16) +
                                 (fromIntegral b3 `shiftL` 8) +
                                 fromIntegral b4
+
+
+packWord8 :: String -> Word8
+packWord8 str =
+  case (readMaybe str) :: Maybe Word8 of
+    (Just n)  -> n
+    Nothing   -> 0
 
 encodeWord16 :: Word16 -> [Word8]
 encodeWord16 = L.unpack . toLazyByteString . word16BE
