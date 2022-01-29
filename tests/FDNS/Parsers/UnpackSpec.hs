@@ -1,17 +1,17 @@
-module FDNS.Parsers.PackSpec (spec) where
+module FDNS.Parsers.UnpackSpec (spec) where
 
 import Test.Hspec                           (Spec, shouldBe, describe, it)
 import qualified Data.ByteString as BS      (pack)
 import FDNS.Types
-import FDNS.Parsers.Pack
+import FDNS.Parsers.Unpack
 
 spec :: Spec
 spec = do
-  describe "DNS Message Pack" packMessageSpeck
+  describe "DNS Message Unpack" unpackMessageSpeck
 
-packMessageSpeck :: Spec
-packMessageSpeck = do
-  it "has a DNSMessage with only one question" $ do
+unpackMessageSpeck :: Spec
+unpackMessageSpeck = do
+  it "has an encoded DNSMessage with only one question" $ do
     let bytestring = BS.pack [0,1,1,128,0,1,0,0,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1]
     let dnsMessage = DNSMessage {
       header = DNSHeader {
@@ -36,9 +36,9 @@ packMessageSpeck = do
       authority = [],
       additional = []
     }
-    (packMessage dnsMessage) `shouldBe` bytestring
+    (unpackMessage bytestring) `shouldBe` dnsMessage
 
-  it "has a DNSMessage with two question" $ do
+  it "has an encoded DNSMessage with two question" $ do
     let bytestring = BS.pack [0,1,1,128,0,2,0,0,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,7,101,120,97,109,112,108,101,3,99,111,109,2,97,114,0,0,1,0,1]
     let dnsMessage = DNSMessage {
       header = DNSHeader {
@@ -64,9 +64,9 @@ packMessageSpeck = do
       authority = [],
       additional = []
     }
-    (packMessage dnsMessage) `shouldBe` bytestring
+    (unpackMessage bytestring) `shouldBe` dnsMessage
 
-  it "has a DNSMessage with only one question and one answer" $ do
+  it "has an encoded DNSMessage with only one question and one answer" $ do
     let bytestring = BS.pack [0,1,1,128,0,1,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,0,0,1,44,0,4,171,1,2,3]
     let dnsMessage = DNSMessage {
       header = DNSHeader {
@@ -93,9 +93,9 @@ packMessageSpeck = do
       authority = [],
       additional = []
     }
-    (packMessage dnsMessage) `shouldBe` bytestring
+    (unpackMessage bytestring) `shouldBe` dnsMessage
 
-  it "has a DNSMessage with two questions and one answer" $ do
+  it "has an encoded DNSMessage with two questions and one answer" $ do
     let bytestring = BS.pack [0,1,1,128,0,2,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,7,101,120,97,109,112,108,101,3,99,111,109,2,97,114,0,0,1,0,1,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,0,0,1,44,0,4,171,1,2,3]
     let dnsMessage = DNSMessage {
       header = DNSHeader {
@@ -123,5 +123,5 @@ packMessageSpeck = do
       authority = [],
       additional = []
     }
-    (packMessage dnsMessage) `shouldBe` bytestring
+    (unpackMessage bytestring) `shouldBe` dnsMessage
 
