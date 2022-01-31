@@ -167,12 +167,12 @@ unpackResource :: BS.ByteString -> Maybe DNSResource
 unpackResource bytes =  if elem Nothing maybeBytes
                         then Nothing
                         else Just (DNSResource{
-                              rname = getName domainBytes,
-                              rtype = rtype,
-                              rclass = getQClass (fromMaybe 0 thirdByte, fromMaybe 0 fouthByte),
-                              ttl = combineWords4 (fromMaybe 0 fifthByte, fromMaybe 0 sixthByte, fromMaybe 0 seventhByte, fromMaybe 0 eighthByte),
-                              rdlength = qtypeRDataLength rtype,
-                              rdata = unpackRdata rtype rdataBytes
+                              rname     = getName domainBytes,
+                              rtype     = rtype,
+                              rclass    = getQClass (fromMaybe 0 thirdByte, fromMaybe 0 fouthByte),
+                              ttl       = combineWords4 (fromMaybe 0 fifthByte, fromMaybe 0 sixthByte, fromMaybe 0 seventhByte, fromMaybe 0 eighthByte),
+                              rdlength  = qtypeRDataLength rtype rdata,
+                              rdata     = rdata
                             })
   where (domainBytes, rest) = U.span (/= '\NUL') bytes
         firstByte   = indexMaybe rest 1
@@ -188,4 +188,5 @@ unpackResource bytes =  if elem Nothing maybeBytes
         rtype       = getQType (fromMaybe 0 firstByte, fromMaybe 0 secondByte)
         rdataBytes  = BS.drop 11 rest
         maybeBytes  = [firstByte, secondByte, thirdByte, fouthByte]
+        rdata       = unpackRdata rtype rdataBytes
 

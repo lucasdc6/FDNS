@@ -1,11 +1,12 @@
 module FDNS.Parsers.Internal.Unpack where
 
 import Numeric                              (showHex)
-import Data.List                            (intersperse, intercalate)
+import Data.Word                            (Word8)
+import Data.List                            (intercalate)
 import Data.Char                            (chr)
 import Data.Maybe                           (fromMaybe)
 import Data.List.Split                      (chunksOf)
-import qualified Data.ByteString as BS      (ByteString, unpack, take, length)
+import qualified Data.ByteString as BS      (ByteString, unpack, take, length, drop)
 import qualified Data.ByteString.Char8 as C (foldl)
 import FDNS.Types
 import FDNS.Parsers.Internal.Utils
@@ -30,10 +31,11 @@ unpackRdata _ _        = ""
 unpackArdata :: BS.ByteString -> Maybe String
 unpackArdata bytes =
   if BS.length bytes >= 4
-    then Just(intersperse '.' rdata)
+    then Just(intercalate "." rdata)
     else Nothing
   where rdataBytes = BS.unpack (BS.take 4 bytes)
-        rdata = map (\byte -> chr (fromIntegral byte)) rdataBytes
+        rdata = map (\byte -> show byte) rdataBytes
+
 
 unpackAAAArdata :: BS.ByteString -> Maybe String
 unpackAAAArdata bytes =
@@ -45,4 +47,9 @@ unpackAAAArdata bytes =
         rdata = intercalate ":" (chunksOf 4 rdataRaw)
 
 unpackMXrdata :: BS.ByteString -> Maybe String
-unpackMXrdata bytes = Just ""
+unpackMXrdata bytes = Just (preference ++ " " ++ domain)
+  where domainBS = BS.drop 2 bytes
+        firstByte   = indexMaybe bytes 0
+        secondByte  = indexMaybe bytes 1
+        preference  = show (combineWords2 (fromMaybe 0 firstByte, fromMaybe 0 secondByte))
+        domain      = getName domainBS

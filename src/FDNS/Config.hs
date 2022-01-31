@@ -63,6 +63,6 @@ recordToResource name rtype record = DNSResource {
     rtype     = rtype,
     rclass    = IN,
     ttl       = recordTTL record,
-    rdlength  = qtypeRDataLength rtype,
+    rdlength  = qtypeRDataLength rtype (value record),
     rdata     = value record
 }

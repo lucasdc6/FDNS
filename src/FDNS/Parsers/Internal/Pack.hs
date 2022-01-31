@@ -1,10 +1,11 @@
 module FDNS.Parsers.Internal.Pack where
 
 import Data.Word                            (Word8, Word16)
-import Data.Char                            (chr)
+import Data.Char                            (chr, ord)
 import Text.Read                            (readMaybe)
 import Data.List.Split                      (splitOn, chunksOf)
 import qualified Data.ByteString as BS      (ByteString, empty, pack)
+import qualified Data.ByteString.UTF8 as U  (fromString)
 
 import FDNS.Types
 import FDNS.Parsers.Internal.Utils
@@ -16,7 +17,7 @@ packRData :: QTYPE -> String -> BS.ByteString
 packRData A    rdata  = packArdata rdata
 packRData AAAA rdata  = packAAAArdata rdata
 packRData MX   rdata  = packMXrdata rdata
-packRData _ _         = BS.empty
+packRData _    _      = BS.empty
 
 packArdata :: String -> BS.ByteString
 packArdata rdata = BS.pack (map packWord8 (splitOn "." rdata))
@@ -28,7 +29,8 @@ packAAAArdata rdata =
 
 packMXrdata :: String -> BS.ByteString
 packMXrdata rdata =
-  let (preference:xs) = splitOn " " rdata
+  let (preference:(domain:xs)) = splitOn " " rdata
   in case readMaybe preference :: Maybe Word16 of
-    (Just x)  -> BS.pack (encodeWord16 x)
+    (Just x)  -> let labels = drop 1 (splitOn "." domain)
+                 in BS.pack ((encodeWord16 x) ++ (map (\x -> fromIntegral (ord x) :: Word8) ((foldl packQName "" labels) ++ "\NUL")))
     Nothing   -> BS.empty

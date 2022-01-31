@@ -5,10 +5,11 @@ import Data.Word  (Word8, Word16)
 import FDNS.Types
 import FDNS.Parsers.Internal.Utils
 
-qtypeRDataLength :: QTYPE -> Word16
-qtypeRDataLength A    = 4
-qtypeRDataLength AAAA = 16
-qtypeRDataLength _    = 0
+qtypeRDataLength :: QTYPE -> String -> Word16
+qtypeRDataLength A      _ = 4
+qtypeRDataLength AAAA   _ = 16
+qtypeRDataLength MX rdata = fromIntegral (length rdata)
+qtypeRDataLength _      _ = 0
 
 qtypeToID :: QTYPE -> Word16
 qtypeToID A           = 1

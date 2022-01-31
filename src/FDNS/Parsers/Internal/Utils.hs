@@ -24,9 +24,9 @@ combineWords2 (b1, b2) = (fromIntegral b1 `shiftL` 8) + fromIntegral b2
 
 combineWords4 :: (Word8, Word8, Word8, Word8) -> Word32
 combineWords4 (b1, b2, b3, b4) = (fromIntegral b1 `shiftL` 24) +
-                                (fromIntegral b2 `shiftL` 16) +
-                                (fromIntegral b3 `shiftL` 8) +
-                                fromIntegral b4
+                                 (fromIntegral b2 `shiftL` 16) +
+                                 (fromIntegral b3 `shiftL` 8) +
+                                  fromIntegral b4
 
 
 packWord8 :: String -> Word8
