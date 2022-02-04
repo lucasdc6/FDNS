@@ -102,6 +102,7 @@ test-suite spec
 
   other-modules:      FDNS.Parsers.PackSpec
                     , FDNS.Parsers.UnpackSpec
+                    , FDNS.UtilsSpec
 
   -- Directories containing source files.
   hs-source-dirs:       tests

@@ -7,10 +7,10 @@ import FDNS.Parsers.Unpack
 
 spec :: Spec
 spec = do
-  describe "DNS Message Unpack" unpackMessageSpeck
+  describe "DNS Message Unpack" unpackMessageSpec
 
-unpackMessageSpeck :: Spec
-unpackMessageSpeck = do
+unpackMessageSpec :: Spec
+unpackMessageSpec = do
   it "has an encoded DNSMessage with only one question" $ do
     let bytestring = BS.pack [0,1,1,128,0,1,0,0,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1]
     let dnsMessage = DNSMessage {

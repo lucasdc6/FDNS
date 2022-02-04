@@ -7,10 +7,10 @@ import FDNS.Parsers.Pack
 
 spec :: Spec
 spec = do
-  describe "DNS Message Pack" packMessageSpeck
+  describe "DNS Message Pack" packMessageSpec
 
-packMessageSpeck :: Spec
-packMessageSpeck = do
+packMessageSpec :: Spec
+packMessageSpec = do
   it "has a DNSMessage with only one question with type A" $ do
     let bytestring = BS.pack [0,1,1,128,0,1,0,0,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1]
     let dnsMessage = DNSMessage {
