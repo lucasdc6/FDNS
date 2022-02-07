@@ -18,7 +18,8 @@ getName bytes = case compressionFormat bytes of
 
 unpackQName :: String -> Char -> String
 unpackQName domain byte
-  | byte >= '\NUL' && byte <= '?'     = domain ++ "."
+  | byte == '\NUL'                    = domain
+  | byte > '\NUL' && byte <= '?'      = domain ++ "."
   | otherwise                         = domain ++ [byte]
 
 

@@ -212,7 +212,7 @@ unpackMessageQuestionsAndAnwsersSpec = do
     (unpackMessage bytestring) `shouldBe` dnsMessage
 
   it "has only one question and one answer with type MX" $ do
-    let bytestring = BS.pack [0,1,1,128,0,1,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,15,0,1,7,101,120,97,109,112,108,101,3,99,111,109,0,0,15,0,1,0,0,1,44,0,16,0,20,2,109,120,7,101,120,97,109,112,108,101,3,99,111,109]
+    let bytestring = BS.pack [0,1,1,128,0,1,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,15,0,1,7,101,120,97,109,112,108,101,3,99,111,109,0,0,15,0,1,0,0,1,44,0,16,0,20,2,109,120,7,101,120,97,109,112,108,101,3,99,111,109,0]
     let dnsMessage = DNSMessage {
       header = DNSHeader {
         identifier = 1,
