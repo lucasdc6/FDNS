@@ -251,49 +251,37 @@ setQueryResponse
         additional = additional
       }
 
-setRCode :: DNSMessage -> RCODE -> DNSMessage
+setRCode :: DNSHeader -> RCODE -> DNSHeader
 setRCode
-  (DNSMessage
-    (DNSHeader
-      identifier
-      qr
-      opcode
-      authoritativeAnswer
-      truncatedMessage
-      recursionDesired
-      recursionAvailable
-      z
-      _
-      qdcount
-      ancount
-      nscount
-      arcount
-    )
-    question
-    answer
-    authority
-    additional
-  ) rccode = DNSMessage {
-        header = DNSHeader {
-          identifier          = identifier,
-          qr                  = True,
-          opcode              = opcode,
-          authoritativeAnswer = authoritativeAnswer,
-          truncatedMessage    = truncatedMessage,
-          recursionDesired    = recursionDesired,
-          recursionAvailable  = recursionAvailable,
-          z                   = z,
-          rccode              = rccode,
-          qdcount             = qdcount,
-          ancount             = ancount,
-          nscount             = nscount,
-          arcount             = arcount
-        },
-        question = question,
-        answer = answer,
-        authority = authority,
-        additional = additional
-      }
+  (DNSHeader
+    identifier
+    qr
+    opcode
+    authoritativeAnswer
+    truncatedMessage
+    recursionDesired
+    recursionAvailable
+    z
+    _
+    qdcount
+    ancount
+    nscount
+    arcount
+  ) rccode = DNSHeader {
+      identifier          = identifier,
+      qr                  = qr,
+      opcode              = opcode,
+      authoritativeAnswer = authoritativeAnswer,
+      truncatedMessage    = truncatedMessage,
+      recursionDesired    = recursionDesired,
+      recursionAvailable  = recursionAvailable,
+      z                   = z,
+      rccode              = rccode,
+      qdcount             = qdcount,
+      ancount             = ancount,
+      nscount             = nscount,
+      arcount             = arcount
+    }
 
 (<<?) :: DNSMessage -> [DNSQuestion] -> DNSMessage
 (<<?)

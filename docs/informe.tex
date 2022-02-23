@@ -1,0 +1,178 @@
+\documentclass{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage[square,numbers]{natbib}
+
+% Title
+\title{Programación Funcional}
+\author{Lucas Di Cunzolo}
+\date{Febrero 2022}
+
+% Document
+\begin{document}
+
+\maketitle
+
+\section{Introducción}
+
+En este trabajo se plantea la implementación parcial del protocolo DNS propuesto
+por la RFC 1035 \cite{rfc1035}
+
+\section{Motivación}
+
+La motivación radica principalmente en querer aplicar los conceptos aprendidos en
+la materia en un proyecto real. La elección del protocolo DNS viene de la intriga
+de conocer un poco más en detalle la implementación del protocolo.
+
+\section{Alcance}
+
+El alcance de la implementación está acotado a los tipos de consultas más usados
+entre los que se encuentran \textit{A}, \textit{AAAA}, \textit{MX}, \textit{TXT}.
+
+Además, nuestro servidor DNS no aplica el uso de TTLs.
+
+\section{Modelo de datos}
+
+El proyecto se inició modelando un mensaje DNS tal cual se define en la RFC, en
+el que se pueden distinguir 3 tipos bien definidos, el encabezado del mensaje
+
+\clearpage
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=data DNSHeader - \textit{src/FDNS/Types.hs:81},
+  label={lst:unchecked_free_movements}
+]
+data DNSHeader = DNSHeader {
+  identifier          :: Word16,
+  qr                  :: Bool,
+  opcode              :: OPCODE,
+  authoritativeAnswer :: Bool,
+  truncatedMessage    :: Bool,
+  recursionDesired    :: Bool,
+  recursionAvailable  :: Bool,
+  z                   :: Bool,
+  rccode              :: RCODE,
+  qdcount             :: Word16,
+  ancount             :: Word16,
+  nscount             :: Word16,
+  arcount             :: Word16
+} deriving (Show, Eq)
+\end{lstlisting}
+
+Dentro del encabezado, se pueden reconocer 2 tipos definidos que modelan el
+tipo de operación (OPCODE) y el tipo de respuesta (RCODE).
+
+El segundo tipo de dato definido es la definición de una pregunta
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=data DNSQuestion - \textit{src/FDNS/Types.hs:100},
+  label={lst:unchecked_free_movements}
+]
+data DNSQuestion = DNSQuestion {
+  qname               :: String,
+  qtype               :: QTYPE,
+  qclass              :: QCLASS
+} deriving (Show, Eq)
+\end{lstlisting}
+
+En este caso, se cuenta con 2 tipos de datos que representan el tipo de
+registro DNS (QTYPE) y su clase (QCLASS)
+
+Por último, se modeló el concepto de recurso, que aplica tanto para la
+sección de respuesta, de autoridad y los adicionales.
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=data DNSQuestion - \textit{src/FDNS/Types.hs:106},
+  label={lst:unchecked_free_movements}
+]
+data DNSResource = DNSResource {
+  rname               :: String,
+  rtype               :: QTYPE,
+  rclass              :: QCLASS,
+  ttl                 :: Word32,
+  rdlength            :: Word16,
+  rdata               :: String
+} deriving (Show, Eq)
+\end{lstlisting}
+
+Todos estos tipos de datos se combinan en el tipo de dato que modela el mensaje
+DNS como tal
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=data DNSQuestion - \textit{src/FDNS/Types.hs:115},
+  label={lst:unchecked_free_movements}
+]
+data DNSMessage = DNSMessage {
+  header              :: DNSHeader,
+  question            :: [DNSQuestion],
+  answer              :: [DNSResource],
+  authority           :: [DNSResource],
+  additional          :: [DNSResource]
+} deriving (Show, Eq)
+\end{lstlisting}
+
+
+\section{Bibliotecas y módulos usadas}
+
+A continuación se van a describir las principales bibliotecas y módulos que se
+utilizaron en el desarrollo de este proyecto.
+
+\subsection{network \cite{package-network-socket}}
+
+Para implementar el servidor UDP se utilizaron los módulos \textit{Network.Socket}
+y \textit{Network.Socket.ByteString} pertenecientes al paquete \textit{network}
+
+\subsection{GetOpt \cite{package-get-opt}}
+
+Para simplificar el parseo de los argumentos que recibe el programa, se utilizó
+el módulo \textit{System.Console.GetOpt}. Para esto, se definió un tipo
+\textit{Option} el cual define todos los argumentos, junto a sus tipos de la
+siguiente forma.
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=data DNSQuestion - \textit{src/FDNS/Commands.hs:14},
+  label={lst:unchecked_free_movements}
+]
+data Options = Options {
+  optConfig       :: FilePath,
+  optBindAddress  :: String,
+  optPort         :: String,
+  optHelp         :: Bool
+} deriving Show
+\end{lstlisting}
+
+Junto a eso, se definió una función que define la lista de opciones, junto a su
+mensaje de ayuda, la lista de flags largas y cortas, y la función de bind
+
+\subsection{Yaml \cite{package-yaml}}
+\subsection{co-log \cite{package-co-log}}
+\subsection{Hspec \cite{package-hspec}}
+
+\section{Interfaz}
+
+\section{Configuración del servidor}
+
+\clearpage
+\renewcommand\refname{Referencias}
+\bibliographystyle{unsrtnat}
+\bibliography{refs}
+
+\end{document}

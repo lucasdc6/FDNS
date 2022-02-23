@@ -11,19 +11,19 @@ help = do
   name <- getProgName
   putStrLn (usageInfo (commandHeader name) options)
 
-data Options = Options
-  { optConfig       :: FilePath
-  , optBindAddress  :: String
-  , optPort         :: String
-  , optHelp         :: Bool
-  } deriving Show
+data Options = Options {
+  optConfig       :: FilePath,
+  optBindAddress  :: String,
+  optPort         :: String,
+  optHelp         :: Bool
+} deriving Show
 
-defaultOptions = Options
-  { optConfig       = "/etc/fdns/fdns.yaml"
-  , optBindAddress  = "0.0.0.0"
-  , optPort         = "53"
-  , optHelp         = False
-  }
+defaultOptions = Options {
+  optConfig       = "/etc/fdns/fdns.yaml",
+  optBindAddress  = "0.0.0.0",
+  optPort         = "53",
+  optHelp         = False
+}
 
 data Flag = Help | Config String
             deriving (Eq, Show)

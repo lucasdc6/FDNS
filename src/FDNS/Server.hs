@@ -30,10 +30,6 @@ runUDPServer options = do
   logger <& ("UDP server is waiting at " ++ host ++ ":" ++ port)
   forever $ do
     (rawMessage, sockAddr) <- recvFrom sock 4096
-    --logger <& ("Header: " ++ show (BS.unpack (BS.take 12 rawMessage)))
-    --logger <& ("Body: " ++ show (BS.take 12 rawMessage))
-    --logger <& ("Raw message: " ++ show (BS.unpack (BS.drop 12 rawMessage)))
-    --logger <& ("Raw body: " ++ show (BS.drop 12 rawMessage))
     let message = unpackMessage rawMessage
     logger <& ("Message: " ++ show message)
     let question' = head (question message)
@@ -45,10 +41,7 @@ runUDPServer options = do
     let message' = message <<! answers
     logger <& ("Message': " ++ show message')
     let response = packMessage message'
-    logger <& show (BS.unpack (packMessage message))
-    --logger <& ("Response: " ++ show response)
     logger <& ("Response body: " ++ show (BS.unpack (BS.drop 12 response)))
-    --logger <& show (BS.drop 12 response)
     let testMessage = unpackMessage response
     logger <& ("Response parsed: " ++ show testMessage)
     sendAllTo sock response sockAddr
