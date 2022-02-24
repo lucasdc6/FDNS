@@ -140,8 +140,8 @@ es necesaria una forma de recorrer la trama de bytes, acotando en
 cada iteración el conjunto de bytes. En este caso, la condición de
 corte está dada por la información provista por el encabezado.
 
-Luego, se utiliza indirectamente en varias de las funciones que
-hacen uso de funciones tales como \textit{map} o \textit{foldl}
+Luego, se utilizan varias de las funciones que hacen uso del concpeto
+tales como \textit{map} o \textit{foldl}
 
 \subsection{Funciones de alto orden}
 
@@ -163,6 +163,26 @@ intentó desarrollar un código reutilizable.
 
 Utilizado ampliamente en la definición de las funciones presentadas
 como utilidades para interactuar con los tipos algebraicos definidos.
+
+\subsection{Mónadas}
+
+En el desarrollo del proyecto se usaron varias mónadas, de las que se
+pueden desatacar
+
+\begin{itemize}
+  \item IO, usada en el programa principal, y las principales funciones
+  de top-level, como el servidor UDP, o las funciones para cargar la
+  configuración desde el disco. Permtie agregar todas las interacciones
+  con el mundo exterior.
+  \item Maybe, usada para tratar con funciones que naturalmente serían
+  funciones parciales por la naturaleza de los datos, sobre todo cuando
+  hablamos de funciones propias del protocolo que reciben datos
+  desempaquetados de una trama de bytes.
+  \item Either, usada de forma similar a la mónada Maybe, pero en este
+  caso, me permite agregar un poco más de información. En particular,
+  se utilizó para trabajar con los errores posibles del mensaje DNS, que
+  luego terminan impactando en el código de respuesta del mensaje.
+\end{itemize}
 
 \section{Bibliotecas y módulos usados}
 
