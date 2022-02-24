@@ -3,7 +3,8 @@ module FDNS.Parsers.Unpack where
 import Data.Word                            (Word16)
 import Data.Char                            (chr)
 import Data.List                            (intersperse)
-import Data.Maybe                           (fromMaybe)
+import Data.Either                          (Either, Either(Right, Left), rights)
+import Data.Maybe                           (fromMaybe, fromJust)
 import qualified Data.ByteString as BS      (ByteString, drop, take, unpack)
 import qualified Data.ByteString.UTF8 as U  (splitAt, span)
 
@@ -31,7 +32,7 @@ import FDNS.Parsers.Internal.Unpack
 unpackMessage :: BS.ByteString -> DNSMessage
 unpackMessage rawMessage = DNSMessage{
   header          = header,
-  question        = questions,
+  question        = questions',
   answer          = answers,
   authority       = authorities,
   additional      = additionals
@@ -39,14 +40,15 @@ unpackMessage rawMessage = DNSMessage{
   where (headerBytes, bodyBytes) = U.splitAt 12 rawMessage
         header            = unpackHeader headerBytes
         questions         = unpackQuestions (qdcount header) bodyBytes
-        quesrtionsOffset  = foldl (\acc q -> acc + questionSize q) 0 questions
-        answers           = unpackResources (ancount header) (BS.drop quesrtionsOffset bodyBytes)
+        questions'        = rights questions
+        quesrtionsOffset  = foldl (\acc q -> acc + questionSize q) 0 questions'
+        answers           = rights $ unpackResources (ancount header) (BS.drop quesrtionsOffset bodyBytes)
         answersOffset     = quesrtionsOffset +
                             foldl (\acc q -> acc + resourceSize q) 0 answers
-        authorities       = unpackResources (nscount header) (BS.drop answersOffset bodyBytes)
+        authorities       = rights $ unpackResources (nscount header) (BS.drop answersOffset bodyBytes)
         authorityOffset   = quesrtionsOffset +
                             answersOffset + foldl (\acc q -> acc + resourceSize q) 0 authorities
-        additionals       = unpackResources (arcount header) (BS.drop answersOffset bodyBytes)
+        additionals       = rights $ unpackResources (arcount header) (BS.drop answersOffset bodyBytes)
 
 {-|
 -- Header format
@@ -116,18 +118,15 @@ unpackHeader bytes = DNSHeader{
                             eleventhByte, twelfthByte
                           ]
 
-unpackList :: (BS.ByteString -> (Maybe a, BS.ByteString))
+unpackList :: (BS.ByteString -> (Either DNSError a, BS.ByteString))
               -> Word16
               -> BS.ByteString
-              -> [a]
+              -> [Either DNSError a]
 unpackList unpack 0 bytes = []
-unpackList unpack n bytes = case unpack bytes of
-                          (Just resource, bytes')  ->
+unpackList unpack n bytes = let (resource, bytes')  = unpack bytes in
                             resource : unpackList unpack (n-1) bytes'
-                          (Nothing, bytes')        ->
-                            unpackList unpack (n-1) bytes'
-  where count     = fromIntegral n
 
+unpackQuestions :: Word16 -> BS.ByteString -> [Either DNSError DNSQuestion]
 unpackQuestions = unpackList unpackQuestion
 
 {-|
@@ -145,14 +144,14 @@ unpackQuestions = unpackList unpackQuestion
 --   |                     QCLASS                    |
 --   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 |-}
-unpackQuestion :: BS.ByteString -> (Maybe DNSQuestion, BS.ByteString)
+unpackQuestion :: BS.ByteString -> (Either DNSError DNSQuestion, BS.ByteString)
 unpackQuestion bytes =  if Nothing `elem` maybeBytes
-                        then (Nothing, bytes)
-                        else (Just (
+                        then (Left $ DNSError FORMAT_ERROR "Error", bytes)
+                        else (Right (
                             DNSQuestion{
                               qname = getName domainBytes,
-                              qtype = getQType (fromMaybe 0 firstByte, fromMaybe 0 secondByte),
-                              qclass = getQClass (fromMaybe 0 thirdByte, fromMaybe 0 fouthByte)
+                              qtype = getQType (fromJust firstByte, fromJust secondByte),
+                              qclass = getQClass (fromJust thirdByte, fromJust fouthByte)
                             }), BS.drop 5 rest)
   where (domainBytes, rest) = U.span (/= '\NUL') bytes
         firstByte   = indexMaybe rest 1
@@ -161,6 +160,7 @@ unpackQuestion bytes =  if Nothing `elem` maybeBytes
         fouthByte   = indexMaybe rest 4
         maybeBytes  = [firstByte, secondByte, thirdByte, fouthByte]
 
+unpackResources :: Word16 -> BS.ByteString -> [Either DNSError DNSResource]
 unpackResources = unpackList unpackResource
 
 {-|
@@ -187,10 +187,10 @@ unpackResources = unpackList unpackResource
 --   /                                               /
 --   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 |-}
-unpackResource :: BS.ByteString -> (Maybe DNSResource, BS.ByteString)
+unpackResource :: BS.ByteString -> (Either DNSError DNSResource, BS.ByteString)
 unpackResource bytes =  if Nothing `elem` maybeBytes
-                        then (Nothing, bytes)
-                        else (Just (DNSResource{
+                        then (Left $ DNSError FORMAT_ERROR "Error", bytes)
+                        else (Right (DNSResource{
                               rname     = getName domainBytes,
                               rtype     = rtype,
                               rclass    = getQClass (fromMaybe 0 thirdByte, fromMaybe 0 fouthByte),

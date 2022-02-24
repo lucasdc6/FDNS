@@ -38,9 +38,11 @@ packHeader header = BS.pack (identifierWords ++ [firstWord, secondWord] ++ qdcou
         nscountWord             = encodeWord16 (nscount header)
         arcountWord             = encodeWord16 (arcount header)
 
+packList :: (a -> BS.ByteString) -> [a] -> BS.ByteString
+packList pack = foldl (\bytes resource -> BS.append bytes (pack resource)) BS.empty
 
 packQuestions :: [DNSQuestion] -> BS.ByteString
-packQuestions = foldl (\pack question -> BS.append pack (packQuestion question)) BS.empty
+packQuestions = packList packQuestion
 
 packQuestion :: DNSQuestion -> BS.ByteString
 packQuestion question = BS.concat [qnameBS, qtypeBS, qclassBS]
@@ -50,7 +52,7 @@ packQuestion question = BS.concat [qnameBS, qtypeBS, qclassBS]
         qclassBS = BS.pack (encodeWord16 (qclassToID (qclass question)))
 
 packResoureces :: [DNSResource] -> BS.ByteString
-packResoureces = foldl (\pack resource -> BS.append pack (packResourece resource)) BS.empty
+packResoureces = packList packResourece
 
 packResourece :: DNSResource -> BS.ByteString
 packResourece resource = BS.concat [nameBS, typeBS, classBS, ttlBS, rdlengthBS, rdataBS]

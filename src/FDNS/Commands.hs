@@ -51,6 +51,5 @@ options = [ Option
 parseArgs :: [String] -> IO Options
 parseArgs args =
   case getOpt Permute options args of
-    ([], _, [])             -> return (foldl (flip id) defaultOptions [])
     (opts, files, [])       -> return (foldl (flip id) defaultOptions opts)
     (_, _, errs)            -> ioError (userError (concat errs ++ usageInfo "Error parsing args" options))

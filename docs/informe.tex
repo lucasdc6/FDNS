@@ -1,10 +1,11 @@
-\documentclass{article}
+\documentclass[6pt]{article}
 
 % Packages
 \usepackage[utf8]{inputenc}
 \usepackage{hyperref}
 \usepackage{listings}
 \usepackage[square,numbers]{natbib}
+\usepackage[a4paper,margin=1in,footskip=0.25in]{geometry}
 
 % Title
 \title{Programación Funcional}
@@ -30,16 +31,14 @@ de conocer un poco más en detalle la implementación del protocolo.
 \section{Alcance}
 
 El alcance de la implementación está acotado a los tipos de consultas más usados
-entre los que se encuentran \textit{A}, \textit{AAAA}, \textit{MX}, \textit{TXT}.
+entre los que se encuentran \textit{A}, \textit{AAAA}, \textit{MX}.
 
-Además, nuestro servidor DNS no aplica el uso de TTLs.
+Además, el servidor DNS no aplica el uso de TTLs ni respuestas recursivas.
 
 \section{Modelo de datos}
 
 El proyecto se inició modelando un mensaje DNS tal cual se define en la RFC, en
-el que se pueden distinguir 3 tipos bien definidos, el encabezado del mensaje
-
-\clearpage
+el que se pueden distinguir 4 tipos bien definidos, el encabezado del mensaje
 
 \begin{lstlisting}[
   frame=single,
@@ -68,7 +67,9 @@ data DNSHeader = DNSHeader {
 Dentro del encabezado, se pueden reconocer 2 tipos definidos que modelan el
 tipo de operación (OPCODE) y el tipo de respuesta (RCODE).
 
-El segundo tipo de dato definido es la definición de una pregunta
+El segundo tipo de dato definido es la pregunta
+
+\clearpage
 
 \begin{lstlisting}[
   frame=single,
@@ -87,8 +88,9 @@ data DNSQuestion = DNSQuestion {
 En este caso, se cuenta con 2 tipos de datos que representan el tipo de
 registro DNS (QTYPE) y su clase (QCLASS)
 
-Por último, se modeló el concepto de recurso, que aplica tanto para la
-sección de respuesta, de autoridad y los adicionales.
+En tercer lugar, se modeló el concepto de recurso, que aplica tanto
+para la sección de respuesta, de respuestas autoritativas y respuestas
+adicionales.
 
 \begin{lstlisting}[
   frame=single,
@@ -107,8 +109,8 @@ data DNSResource = DNSResource {
 } deriving (Show, Eq)
 \end{lstlisting}
 
-Todos estos tipos de datos se combinan en el tipo de dato que modela el mensaje
-DNS como tal
+Por último, todos estos tipos de datos se combinan en el tipo de dato
+que modela el mensaje DNS como tal
 
 \begin{lstlisting}[
   frame=single,
@@ -126,8 +128,43 @@ data DNSMessage = DNSMessage {
 } deriving (Show, Eq)
 \end{lstlisting}
 
+\section{Conceptos de la materia}
 
-\section{Bibliotecas y módulos usadas}
+Para el desarrollo de este proyecto, se utilizaron conceptos aprendidos
+en la materia tales como
+
+\subsection{Recursión estructural}
+
+Utilizada para el desarrollo de las funciones de desempaquetado, ya que
+es necesaria una forma de recorrer la trama de bytes, acotando en
+cada iteración el conjunto de bytes. En este caso, la condición de
+corte está dada por la información provista por el encabezado.
+
+Luego, se utiliza indirectamente en varias de las funciones que
+hacen uso de funciones tales como \textit{map} o \textit{foldl}
+
+\subsection{Funciones de alto orden}
+
+Aplicadas ampliamente a lo largo del proyecto, me permitió desacoplar
+mucho más la lógica en varios puntos, para desarrollar funciones
+genéricas que permitan aplicarse en varios casos. Uno de los casos
+más claros son las funciones \textit{packList} y \textit{unpackList}
+usadas para trabajar con todos los recursos representados como listas
+del mensaje DNS (preguntas, respuestas, respuestas autoritativas
+y respuestas adicionales)
+
+\subsection{Funciones currificadas}
+
+Como sabemos, en haskell todas las funciones son currificadas, esto nos
+permite escribir código compacto y potente. A lo largo de trabajo se
+intentó desarrollar un código reutilizable.
+
+\subsection{Pattern matching}
+
+Utilizado ampliamente en la definición de las funciones presentadas
+como utilidades para interactuar con los tipos algebraicos definidos.
+
+\section{Bibliotecas y módulos usados}
 
 A continuación se van a describir las principales bibliotecas y módulos que se
 utilizaron en el desarrollo de este proyecto.
@@ -137,18 +174,24 @@ utilizaron en el desarrollo de este proyecto.
 Para implementar el servidor UDP se utilizaron los módulos \textit{Network.Socket}
 y \textit{Network.Socket.ByteString} pertenecientes al paquete \textit{network}
 
+Esta biblioteca se desarrollo una función de top-level que interactúa con
+los datos recibidos por el cliente a través de un socket UDP.
+
 \subsection{GetOpt \cite{package-get-opt}}
 
-Para simplificar el parseo de los argumentos que recibe el programa, se utilizó
-el módulo \textit{System.Console.GetOpt}. Para esto, se definió un tipo
-\textit{Option} el cual define todos los argumentos, junto a sus tipos de la
-siguiente forma.
+La interfaz definida para este programa es a través de líneas
+de comandos (CLI), para desarrollarla, se utilizó el módulo
+\textit{System.Console.GetOpt}, perteneciente al paquete
+\textit{base} de haskell.
+
+Para esto, se definió un tipo \textit{Option} el cual representa todas
+las opciones posibles.
 
 \begin{lstlisting}[
   frame=single,
   language=haskell,
   captionpos=b,
-  caption=data DNSQuestion - \textit{src/FDNS/Commands.hs:14},
+  caption=data Options - \textit{src/FDNS/Commands.hs:14},
   label={lst:unchecked_free_movements}
 ]
 data Options = Options {
@@ -159,16 +202,588 @@ data Options = Options {
 } deriving Show
 \end{lstlisting}
 
-Junto a eso, se definió una función que define la lista de opciones, junto a su
-mensaje de ayuda, la lista de flags largas y cortas, y la función de bind
+A su vez, se definió una función que declara la descripción de las
+opciones (\textit{OptDescr}). Esta biblioteca permitió armar una interfaz
+completa, que ya contempla el parseo de los argumentos, simplemente
+pasandole los argumentos que se recuperan directamente usando la función
+\textit{getArgs}.
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Ejemplo de uso,
+  label={lst:unchecked_free_movements}
+]
+data Options = Options {
+  optConfig       :: FilePath,
+  optBindAddress  :: String,
+  optPort         :: String,
+  optHelp         :: Bool
+} deriving Show
+\end{lstlisting}
 
 \subsection{Yaml \cite{package-yaml}}
+
+El modo de configuración de los registros DNS del servidor se quiso
+mantener simple, por lo que se definió un archivo de configuración
+básico en formato YAML, descrita en la siguiente sección.
+
+\subsubsection{Definición}
+
+\clearpage
+\begin{lstlisting}[
+  frame=single,
+  captionpos=b,
+  caption=Ejemplo de configuración,
+  label={lst:unchecked_free_movements}
+]
+# Listado de dominios
+domains:
+  # Dominio en cuestion
+  - name: .example.com
+    # Listado de registros del dominio
+    records:
+        # Tipo del dominio
+        # Puede ser A, AAAA, MX o TXT
+      - type: A
+        # Valor del registro
+        # El formato depende del tipo de registro
+        value: 1.2.3.4
+\end{lstlisting}
+
+Teniendo esto definido, ahora podemos llamar a nuestro
+servidor de la siguiente forma
+
+\begin{lstlisting}[
+  frame=single,
+  captionpos=b,
+  caption=Ejemplo de llamado usando la CLI y un archivo YAML,
+  label={lst:unchecked_free_movements}
+]
+./fdns --config ./example-config.yaml
+\end{lstlisting}
+
+\subsubsection{Desarrollo}
+
+Para poder parsear los archivos yaml, se crearon los tipos de datos
+que representan cada uno de los objetos del yaml planteados
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Tipos de datos YAML,
+  label={lst:unchecked_free_movements}
+]
+data Record = Record {
+  recordType    :: String,
+  value         :: String
+} deriving (Eq, Show)
+
+data Domain = Domain {
+  name          :: String,
+  records       :: [Record]
+} deriving (Eq, Show)
+
+data Config = Config {
+  domains :: [Domain]
+} deriving (Eq, Show)
+\end{lstlisting}
+
+Junto a eso, a cada uno de estos nuevos tipos, se le definieron
+las funciones \textit{parseJSON} de la clase \textit{FromJSON}
+
+\clearpage
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Funciones parseJSON,
+  label={lst:unchecked_free_movements}
+]
+instance FromJSON Record where
+  parseJSON (Y.Object v) =
+    Record <$>
+    v .:   "type"       <*>
+    v .:   "value"
+  parseJSON k = fail ("Expected Object for Config value: " ++ show k)
+
+instance FromJSON Domain where
+  parseJSON (Y.Object v) =
+    Domain <$>
+    v .:   "name"       <*>
+    v .:   "records"
+  parseJSON k = fail ("Expected Object for Config value: " ++ show k)
+
+instance FromJSON Config where
+  parseJSON (Y.Object v) =
+    Config <$>
+    v .:   "domains"
+  parseJSON _ = fail "Expected Object for Config value"
+\end{lstlisting}
+
+Por último, se desarrolló una función que, usando la función
+\textit{decodeFileEither}, se encarga de leer el archivo de configuración
+en formato yaml, y retornar, un \textit{Config} usando la mónada IO
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Funcion readConfig,
+  label={lst:unchecked_free_movements}
+]
+readConfig :: String -> IO Config
+readConfig configFilePath =
+  either (error . show) id <$>
+  (decodeFileEither configFilePath)
+\end{lstlisting}
+
 \subsection{co-log \cite{package-co-log}}
+
+Para mejorar la visibilidad del funcionamiento del servidor, se
+plantearon una serie de logs, usando la biblioteca co-log. La
+ingtegración fue bastante simple usando el logger ya provisto
+por el módulo \textit{Colog}
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Ejemplo de uso de co-log,
+  label={lst:unchecked_free_movements}
+]
+let logger = logStringStdout
+logger <& ("Load config file from \"" ++ configFile ++ "\"")
+\end{lstlisting}
+
 \subsection{Hspec \cite{package-hspec}}
+
+Para facilitar el desarrollo de nuevas funcionalidades, se estableció
+un flujo de TDD, en donde toda nueva funcionalidad que se quiera
+introducir, primero tiene que ser planteada en formato de test.
+
+En este caso, se aplicó test sobre las funciones principales de
+empaquetado y desempaquetado, ya que es simple plantear una
+correspondencia entre un conjunto de bytes en formato ByteString, con
+el tipo \textit{DNSMessage}.
+
+Para simplificar la configuración de la librería, se utilizó una
+estructura de directorios estándar, en donde, cada módulo de nuestro
+código se corresponde con un módulo de spec. El mapeo se puede encontrar
+en el archivo de inicio de los tests \textit{tests/Spec.hs}
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Archivo tests/Spec.hs,
+  label={lst:unchecked_free_movements}
+]
+{-# OPTIONS_GHC -F -pgmF hspec-discover #-}
+\end{lstlisting}
+
+Además, se agregó el apartado \textit{test-suite} en cabal.
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Apartado test-suite del archivo fdns.cabal,
+  label={lst:unchecked_free_movements}
+]
+test-suite spec
+  type:                 exitcode-stdio-1.0
+
+  -- .hs or .lhs file containing the Main module.
+  main-is:              Spec.hs
+
+  other-modules:      FDNS.Parsers.PackSpec
+                    , FDNS.Parsers.UnpackSpec
+                    , FDNS.UtilsSpec
+
+  -- Directories containing source files.
+  hs-source-dirs:       tests
+
+  -- Other library packages from which modules are imported.
+  build-depends:      base >=4.10.1.0 && <4.15
+                    , bytestring
+                    , fdns
+                    , hspec
+
+  -- Base language which the package is written in.
+  default-language:     Haskell2010
+
+  build-tool-depends: hspec-discover:hspec-discover == 2.*
+\end{lstlisting}
+
+Esto nos permite ejecutar el conjunto de tests de la siguiente forma
+
+\begin{lstlisting}[
+  frame=single,
+  captionpos=b,
+  caption=Ejemplo de ayuda,
+  label={lst:unchecked_free_movements}
+]
+cabal test all
+\end{lstlisting}
+
 
 \section{Interfaz}
 
-\section{Configuración del servidor}
+La interfaz se planteó de forma que sea simple empezar a probar el
+servidor DNS, contando con un archivo de configuración como el
+planteado en el apartado de YAML.
+
+\begin{lstlisting}[
+  frame=single,
+  captionpos=b,
+  caption=Ejemplo de ayuda,
+  label={lst:unchecked_free_movements}
+]
+$ fdns --help
+Usage: fdns -c FILE [-H HOST] [-p PORT]
+  -h, -?   --help         Show this help message
+  -c FILE  --config=FILE  Config file
+  -H HOST  --host=HOST    Address to bind
+  -p PORT  --port=PORT    Port to bind
+\end{lstlisting}
+
+\section{Desarrollo del proyecto}
+
+El proyecto se planteó separando completamente la lógica del protocolo
+DNS, de la interacción con el cliente (socket UDP) y el usuario (CLI).
+
+Para esto, se cuenta con una función \textit{main} como punto de entrada,
+en donde se parsean los argumentos usando \textit{GetOpt}, y dependiendo
+los argumentos enviados, se muestra una ayuda, o se inicia el servidor
+UDP.
+
+El servidor UDP toma todas sus configuraciones necesarias de los
+argumentos al programa, e inicia un socket a la espera de datos.
+
+Una vez recuperados los datos, en formato ByteString, se llama a la
+función de desempaquetado.
+
+\section{Desarrollo del protocolo}
+
+Las funciones referentes al protocolo se pueden diferenciar en 2 grandes
+gruopos, las de desempaquetado, que toman una trama de bytes, y retornan
+uno de los tipos definidos del modelo de datos. En su contraparte, tenemos
+las funciones de empaquetado, que reciben tipos del modelo de datos, y
+retornan su representación en bytes.
+
+\subsection{Desempaquetado}
+
+El primer paso es identificar y desempaquetar los primeros
+12 bytes, que representan el encabezado del mensaje. En el mismo vamos
+a tener toda la información necesaria para poder trabajar con el resto
+del mensaje.
+
+El encabezado tiene el siguiente formato
+
+\begin{lstlisting}[
+  frame=single,
+  captionpos=b,
+  caption=Ejemplo de ayuda,
+  label={lst:unchecked_free_movements}
+]
+            1  1  1  1  1  1
+            0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+            |                      ID                       |
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+            |QR|   Opcode  |AA|TC|RD|RA|   Z    |   RCODE   |
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+            |                    QDCOUNT                    |
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+            |                    ANCOUNT                    |
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+            |                    NSCOUNT                    |
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+            |                    ARCOUNT                    |
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+\end{lstlisting}
+
+Esto se traduce de la siguiente forma
+\begin{itemize}
+  \item Los primeros 2 bytes se usan para representar el ID
+  \item El tercer byte se usa para representar 4 campos
+  \begin{itemize}
+    \item El primer bit representa si es una query (0) o una respeusta (1)
+    \item Los siguientes 4 bits, representan el código de operación
+    \item El sexto bit se utiliza solamente en las respeustas,
+    y represnta si es una respeusta autoritativa.
+    \item El septimo bit se utiliza para marcar que el mensaje va
+    a estar truncado por el tamaño máximo del canal.
+  \end{itemize}
+  \item El cuarto byte se usa para representar otros 4 campos
+  \begin{itemize}
+    \item El primer bit marca si se quiere realizar una pregunta
+    recursvia.
+    \item El segundo bit, es modificado por la respuesta, y marca si
+    el servidor sopoerta respuestas recursivas.
+    \item Los siguientes 3 bits, estan reservados para futuras
+    implementaciones
+    \item Los siguientes 4 bits representan el tipo de respuesta
+  \end{itemize}
+  \item El quinto y sexto byte representan la cantidad de preguntas
+  que contiene el mensaje.
+  \item El septimo y octavo byte representan la cantidad de respuestas
+  que contiene el mensaje.
+  \item El noveno y décimo byte representan la cantidad de respuestas
+  autoritativas que contiene el mensaje.
+  \item El onceavo y doceavo byte representan la cantidad de respuestas
+  adicionales que contiene el mensaje.
+\end{itemize}
+
+Esto se traduce en una función destinada a desempaquetar el encabezado,
+que recibe los bytes en el formato \textit{ByteString}, y retorna un
+\textit{DNSHeader}
+
+En este caso, separamos cada uno de los bytes usando una función
+definida en el módulo \\\textit{FDNS.Parsers.Internal.Utils}, la
+cual añade una capa de control usando la mónada \textit{Maybe}.
+
+Una vez separados los bytes, se empieza a construir el encabezado
+recuperando los valores con \textit{fromMaybe}, tomando por defecto
+el valor nulo de los campos. Esto permite armar siempre un encabezado
+bien formado para retornar, aunque la trama de bytes sea incorrecta,
+marcando el error en el campo \textit{rcode} del ebncabezado.
+
+El siguiente paso, y haciendo uso de los datos recuperados
+anteriormente, es desempaquetar tantas preguntas como el
+valor de \textit{qdcount} del encabezado. Para esto, se
+definió una función de alto orden que hace uso de
+recursión estructural para recorrer la trama de bytes e
+ir desempaquetando aplicando la función que recibe como
+primer parámetro
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Funcion unpackList y unpackQuestions,
+  label={lst:unchecked_free_movements}
+]
+unpackList :: (BS.ByteString -> (Either DNSError a, BS.ByteString))
+              -> Word16
+              -> BS.ByteString
+              -> [Either DNSError a]
+unpackList unpack 0 bytes = []
+unpackList unpack n bytes = let (resource, bytes')  = unpack bytes in
+                            resource : unpackList unpack (n-1) bytes'
+
+unpackQuestions :: Word16 -> BS.ByteString -> [Either DNSError DNSQuestion]
+unpackQuestions = unpackList unpackQuestion
+\end{lstlisting}
+
+En este caso, vamos a recorrer la trama de bytes en cada llamado
+de la recursión, usando la función \textit{unpackQuestion}, sobre una
+subtrama de bytes diferente, y con la condición de corte
+dada por que la cantidad de preguntas a desempaquetar llegue a 0.
+
+Esta función \textit{unpackQuestion} se aplica para desempaquetar
+las preguntas, que tienen el siguiente formato
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Formato preguntas DNS,
+  label={lst:unchecked_free_movements}
+]
+            1  1  1  1  1  1
+            0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+            |                                               |
+            /                     QNAME                     /
+            /                                               /
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+            |                     QTYPE                     |
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+            |                     QCLASS                    |
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+\end{lstlisting}
+
+Por último, y de forma similar al proceso anterior, se tienen que
+desempaquetar las respuestas, respuestas autoritativas y respuestas
+adicionales que, recordando la definición del protocolo, comparten
+su definición.
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Función unpackResources,
+  label={lst:unchecked_free_movements}
+]
+
+unpackResources :: Word16 -> BS.ByteString -> [Either DNSError DNSResource]
+unpackResources = unpackList unpackResource
+\end{lstlisting}
+
+En este caso, usamos la función \textit{unpackResource},
+aplicada con una trama de bytes que tiene que repretar
+el siguiente formato
+
+\clearpage
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Formato preguntas DNS,
+  label={lst:unchecked_free_movements}
+]
+            1  1  1  1  1  1
+            0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+            |                                               |
+            /                                               /
+            /                      NAME                     /
+            |                                               |
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+            |                      TYPE                     |
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+            |                     CLASS                     |
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+            |                      TTL                      |
+            |                                               |
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+            |                   RDLENGTH                    |
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--|
+            /                     RDATA                     /
+            /                                               /
+            +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+\end{lstlisting}
+
+\subsection{Trabajando con el tipo DNSMessage}
+
+Una vez analizado el mensaje DNS, se tiene que recuperar, de existir,
+el registro que satisfaga la pregunta. Esto lo vamos a hacer usando
+la función \textit{lookup}
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Ejemplo de ayuda,
+  label={lst:unchecked_free_movements}
+]
+lookup :: Config -> String -> String -> [Record]
+lookup config name' recordType' =
+  case find (\d -> name d == name') (domains config) of
+    (Just domain) -> filter
+                      (\r -> recordType r == recordType')
+                      (records domain)
+    Nothing       -> []
+\end{lstlisting}
+
+Con esto vamos a tener una lista de \textit{Record}, que
+es fácilmente transformable a una lista de \textit{DNSResource}
+usando un map y una función auxiliar que dado un \textit{Record}
+retorna un \textit{DNSResource}
+
+Por último, para agregarlo, se tiene un conjunto de funciones
+que reciben un \textit{DNSMessage} y retornan un nuevo
+\textit{DNSMessage} modificado con ese agregado
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Ejemplo de ayuda,
+  label={lst:unchecked_free_movements}
+]
+-- Agregar una lista de preguntas al mensaje
+(<<?) :: DNSMessage -> [DNSQuestion] -> DNSMessage
+-- Agregar una lista de respuestas al mensaje
+(<<!) :: DNSMessage -> [DNSResource] -> DNSMessage
+-- Agregar una lista de respuestas autoritativas al mensaje
+(<<@) :: DNSMessage -> [DNSResource] -> DNSMessage
+-- Agregar una lista de preguntas adicionales al mensaje
+(<<+) :: DNSMessage -> [DNSResource] -> DNSMessage
+\end{lstlisting}
+
+Para simplificar la construcción del nuevo mensaje DNS, se cuenta con
+la función \textit{dnsResolver}, la cual ya se encarga de recuperar
+los registros para las preguntas dadas, y retorna un nuevo mensaje
+DNS con las respuetas ya agregadas.
+
+\clearpage
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Ejemplo de ayuda,
+  label={lst:unchecked_free_movements}
+]
+dnsResolver :: Config -> DNSMessage -> DNSMessage
+dnsResolver config message = message <<! resources
+  where questions = question message
+        lookupConfig = FDNS.Config.lookup config
+        resources = concat $ lookupConfig <$> questions
+\end{lstlisting}
+
+\subsection{Empaquetado}
+
+Para poder retornar la respuesta al cliente, es necesario empaquetar
+el mensaje en una trama de bytes. Para ello, tenemos funciones similares
+a las vistas en el desempaquetado.
+
+Contamos con una función \textit{packHeader} que recibe un \textit{DNSQuestion},
+y retorna un ByteString.
+
+Luego contamos con una función genérica para empaquetar listas, la cual es usada
+para empaquetar tanto las preguntas (\textit{packQuestions}), como para empaquetar
+el resto de los recursos (\textit{packResoureces})
+
+\begin{lstlisting}[
+  frame=single,
+  language=haskell,
+  captionpos=b,
+  caption=Funcion unpackList y unpackQuestions,
+  label={lst:unchecked_free_movements}
+]
+packList :: (a -> BS.ByteString) -> [a] -> BS.ByteString
+packList pack = foldl
+                (\bytes resource -> BS.append bytes (pack resource))
+                BS.empty
+
+packQuestions :: [DNSQuestion] -> BS.ByteString
+packQuestions = packList packQuestion
+
+packResoureces :: [DNSResource] -> BS.ByteString
+packResoureces = packList packResourece
+\end{lstlisting}
+
+\section{Conclusiones}
+
+El planteamiento del modelo de datos fue muy simple a nivel conceptual,
+y el lenguaje ayudó en gran medida a bajar rapidamente varias ideas
+para el desarrollo. Realmente me ubiera gustado contar con más tiempo
+para poder llegar a plantear un menejo de errores más completo en cuanto
+al protocolo DNS, como así para plantear una mirada más completa del
+mismo, aunque creo que sirvió como una primera introducción para empezar
+a entender como pueden plantearse proyectos con una complejidad media,
+teniendo una separación fuerte de la lógica funcional, de la interacción
+con el mundo exterior.
+
+\subsection{Para mejorar}
+
+Como se nombró anteriormente, un manejo de los errores más completo.
+También creo que la lógica de desempaquetado de un mensaje se puede
+mejorar para llevarlo a un plano más simple, sobre todo en el manejo
+de los corrmientos entre secciones del mensaje.
+
+Otro detalle a tener en cuenta sería introducir alguna estructura de
+datos que permita trabajar de forma simple, e implementar el concepto
+de compresión de los mensajes, actualmente, los mensajes generados
+por este servidor DNS van a ser relativamente más pesados ya que en
+cada aparición de un dominio, se transforma directamente a su
+representación en bytes. Se había hablado de introducir los
+Zipper \cite{package-zipper}.
 
 \clearpage
 \renewcommand\refname{Referencias}

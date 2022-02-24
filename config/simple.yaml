@@ -3,26 +3,33 @@ domains:
     records:
       - type: A
         value: 172.2.2.1
-        ttl: 300
       - type: A
         value: 172.2.2.2
-        ttl: 300
       - type: AAAA
         value: 2800:03f0:4002:0813:0000:0000:0000:200e
-        ttl: 300
       - type: AAAA
         value: 2800:03f0:4002:0813:0000:0000:0000:200f
-        ttl: 300
       - type: MX
         value: 20 .mx.example.com
-        ttl: 300
+      - type: MX
+        value: 25 .mxb.example.com
   - name: .mx.example.com
     records:
       - type: A
         value: 172.2.2.3
-        ttl: 300
   - name: .example.com.ar
     records:
       - type: A
         value: 172.3.2.1
-        ttl: 300
+  - name: .google.com.ar
+    records:
+      - type: A
+        value: 172.2.2.1
+      - type: A
+        value: 172.2.2.2
+      - type: AAAA
+        value: 2800:03f0:4002:0813:0000:0000:0000:200e
+      - type: AAAA
+        value: 2800:03f0:4002:0813:0000:0000:0000:200f
+      - type: MX
+        value: 20 .mx.example.com
