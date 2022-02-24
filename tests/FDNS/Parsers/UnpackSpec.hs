@@ -13,7 +13,7 @@ spec = do
 unpackMessageQuestionsSpec :: Spec
 unpackMessageQuestionsSpec = do
   it "has only one question with type A" $ do
-    let bytestring = BS.pack [0,1,1,128,0,1,0,0,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1]
+    let bytestring = BS.pack [0,1,1,0,0,1,0,0,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1]
     let dnsMessage = DNSMessage {
       header = DNSHeader {
         identifier = 1,
@@ -22,9 +22,9 @@ unpackMessageQuestionsSpec = do
         authoritativeAnswer = False,
         truncatedMessage = False,
         recursionDesired = True,
-        recursionAvailable = True,
+        recursionAvailable = False,
         z = False,
-        rccode = NO_ERROR,
+        rcode = NO_ERROR,
         qdcount = 1,
         ancount = 0,
         nscount = 0,
@@ -37,10 +37,10 @@ unpackMessageQuestionsSpec = do
       authority = [],
       additional = []
     }
-    (unpackMessage bytestring) `shouldBe` dnsMessage
+    unpackMessage bytestring `shouldBe` dnsMessage
 
   it "has two question with type A" $ do
-    let bytestring = BS.pack [0,1,1,128,0,2,0,0,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,7,101,120,97,109,112,108,101,3,99,111,109,2,97,114,0,0,1,0,1]
+    let bytestring = BS.pack [0,1,1,0,0,2,0,0,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,7,101,120,97,109,112,108,101,3,99,111,109,2,97,114,0,0,1,0,1]
     let dnsMessage = DNSMessage {
       header = DNSHeader {
         identifier = 1,
@@ -49,9 +49,9 @@ unpackMessageQuestionsSpec = do
         authoritativeAnswer = False,
         truncatedMessage = False,
         recursionDesired = True,
-        recursionAvailable = True,
+        recursionAvailable = False,
         z = False,
-        rccode = NO_ERROR,
+        rcode = NO_ERROR,
         qdcount = 2,
         ancount = 0,
         nscount = 0,
@@ -65,10 +65,10 @@ unpackMessageQuestionsSpec = do
       authority = [],
       additional = []
     }
-    (unpackMessage bytestring) `shouldBe` dnsMessage
+    unpackMessage bytestring `shouldBe` dnsMessage
 
   it "has only one question with type AAAA" $ do
-    let bytestring = BS.pack [0,1,1,128,0,1,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,28,0,1]
+    let bytestring = BS.pack [0,1,1,0,0,1,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,28,0,1]
     let dnsMessage = DNSMessage {
       header = DNSHeader {
         identifier = 1,
@@ -77,9 +77,9 @@ unpackMessageQuestionsSpec = do
         authoritativeAnswer = False,
         truncatedMessage = False,
         recursionDesired = True,
-        recursionAvailable = True,
+        recursionAvailable = False,
         z = False,
-        rccode = NO_ERROR,
+        rcode = NO_ERROR,
         qdcount = 1,
         ancount = 1,
         nscount = 0,
@@ -92,10 +92,10 @@ unpackMessageQuestionsSpec = do
       authority = [],
       additional = []
     }
-    (unpackMessage bytestring) `shouldBe` dnsMessage
+    unpackMessage bytestring `shouldBe` dnsMessage
 
   it "has only one question with type MX" $ do
-    let bytestring = BS.pack [0,1,1,128,0,1,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,15,0,1]
+    let bytestring = BS.pack [0,1,1,0,0,1,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,15,0,1]
     let dnsMessage = DNSMessage {
       header = DNSHeader {
         identifier = 1,
@@ -104,9 +104,9 @@ unpackMessageQuestionsSpec = do
         authoritativeAnswer = False,
         truncatedMessage = False,
         recursionDesired = True,
-        recursionAvailable = True,
+        recursionAvailable = False,
         z = False,
-        rccode = NO_ERROR,
+        rcode = NO_ERROR,
         qdcount = 1,
         ancount = 1,
         nscount = 0,
@@ -119,12 +119,12 @@ unpackMessageQuestionsSpec = do
       authority = [],
       additional = []
     }
-    (unpackMessage bytestring) `shouldBe` dnsMessage
+    unpackMessage bytestring `shouldBe` dnsMessage
 
 unpackMessageQuestionsAndAnwsersSpec :: Spec
 unpackMessageQuestionsAndAnwsersSpec = do
   it "has only one question and one answer with type A" $ do
-    let bytestring = BS.pack [0,1,1,128,0,1,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,0,0,1,44,0,4,171,1,2,3]
+    let bytestring = BS.pack [0,1,1,0,0,1,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,0,0,1,44,0,4,171,1,2,3]
     let dnsMessage = DNSMessage {
       header = DNSHeader {
         identifier = 1,
@@ -133,9 +133,9 @@ unpackMessageQuestionsAndAnwsersSpec = do
         authoritativeAnswer = False,
         truncatedMessage = False,
         recursionDesired = True,
-        recursionAvailable = True,
+        recursionAvailable = False,
         z = False,
-        rccode = NO_ERROR,
+        rcode = NO_ERROR,
         qdcount = 1,
         ancount = 1,
         nscount = 0,
@@ -150,10 +150,10 @@ unpackMessageQuestionsAndAnwsersSpec = do
       authority = [],
       additional = []
     }
-    (unpackMessage bytestring) `shouldBe` dnsMessage
+    unpackMessage bytestring `shouldBe` dnsMessage
 
   it "has two questions and one answer with type A" $ do
-    let bytestring = BS.pack [0,1,1,128,0,2,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,7,101,120,97,109,112,108,101,3,99,111,109,2,97,114,0,0,1,0,1,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,0,0,1,44,0,4,171,1,2,3]
+    let bytestring = BS.pack [0,1,1,0,0,2,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,7,101,120,97,109,112,108,101,3,99,111,109,2,97,114,0,0,1,0,1,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,0,0,1,44,0,4,171,1,2,3]
     let dnsMessage = DNSMessage {
       header = DNSHeader {
         identifier = 1,
@@ -162,9 +162,9 @@ unpackMessageQuestionsAndAnwsersSpec = do
         authoritativeAnswer = False,
         truncatedMessage = False,
         recursionDesired = True,
-        recursionAvailable = True,
+        recursionAvailable = False,
         z = False,
-        rccode = NO_ERROR,
+        rcode = NO_ERROR,
         qdcount = 2,
         ancount = 1,
         nscount = 0,
@@ -180,10 +180,10 @@ unpackMessageQuestionsAndAnwsersSpec = do
       authority = [],
       additional = []
     }
-    (unpackMessage bytestring) `shouldBe` dnsMessage
+    unpackMessage bytestring `shouldBe` dnsMessage
 
-  it "has only one question and one answer with type AAAA" $ do
-    let bytestring = BS.pack [0,1,1,128,0,1,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,28,0,1,7,101,120,97,109,112,108,101,3,99,111,109,0,0,28,0,1,0,0,1,44,0,16,40,0,3,240,64,2,8,19,0,0,0,0,0,0,32,14]
+  it "has only one question and two answer with type A" $ do
+    let bytestring = BS.pack [0,1,1,0,0,1,0,2,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,0,0,1,44,0,4,171,1,2,3,7,101,120,97,109,112,108,101,3,99,111,109,0,0,1,0,1,0,0,1,44,0,4,171,1,2,4]
     let dnsMessage = DNSMessage {
       header = DNSHeader {
         identifier = 1,
@@ -192,9 +192,39 @@ unpackMessageQuestionsAndAnwsersSpec = do
         authoritativeAnswer = False,
         truncatedMessage = False,
         recursionDesired = True,
-        recursionAvailable = True,
+        recursionAvailable = False,
         z = False,
-        rccode = NO_ERROR,
+        rcode = NO_ERROR,
+        qdcount = 1,
+        ancount = 2,
+        nscount = 0,
+        arcount = 0
+      },
+      question = [
+        DNSQuestion {qname = ".example.com", qtype = A, qclass = IN}
+      ],
+      answer = [
+        DNSResource {rname = ".example.com", rtype = A, rclass = IN, ttl = 300, rdlength = 4, rdata = "171.1.2.3"},
+        DNSResource {rname = ".example.com", rtype = A, rclass = IN, ttl = 300, rdlength = 4, rdata = "171.1.2.4"}
+      ],
+      authority = [],
+      additional = []
+    }
+    unpackMessage bytestring `shouldBe` dnsMessage
+
+  it "has only one question and one answer with type AAAA" $ do
+    let bytestring = BS.pack [0,1,1,0,0,1,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,28,0,1,7,101,120,97,109,112,108,101,3,99,111,109,0,0,28,0,1,0,0,1,44,0,16,40,0,3,240,64,2,8,19,0,0,0,0,0,0,32,14]
+    let dnsMessage = DNSMessage {
+      header = DNSHeader {
+        identifier = 1,
+        qr = False,
+        opcode = QUERY,
+        authoritativeAnswer = False,
+        truncatedMessage = False,
+        recursionDesired = True,
+        recursionAvailable = False,
+        z = False,
+        rcode = NO_ERROR,
         qdcount = 1,
         ancount = 1,
         nscount = 0,
@@ -209,10 +239,10 @@ unpackMessageQuestionsAndAnwsersSpec = do
       authority = [],
       additional = []
     }
-    (unpackMessage bytestring) `shouldBe` dnsMessage
+    unpackMessage bytestring `shouldBe` dnsMessage
 
   it "has only one question and one answer with type MX" $ do
-    let bytestring = BS.pack [0,1,1,128,0,1,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,15,0,1,7,101,120,97,109,112,108,101,3,99,111,109,0,0,15,0,1,0,0,1,44,0,16,0,20,2,109,120,7,101,120,97,109,112,108,101,3,99,111,109,0]
+    let bytestring = BS.pack [0,1,1,0,0,1,0,1,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,15,0,1,7,101,120,97,109,112,108,101,3,99,111,109,0,0,15,0,1,0,0,1,44,0,17,0,20,2,109,120,7,101,120,97,109,112,108,101,3,99,111,9]
     let dnsMessage = DNSMessage {
       header = DNSHeader {
         identifier = 1,
@@ -221,11 +251,11 @@ unpackMessageQuestionsAndAnwsersSpec = do
         authoritativeAnswer = False,
         truncatedMessage = False,
         recursionDesired = True,
-        recursionAvailable = True,
+        recursionAvailable = False,
         z = False,
-        rccode = NO_ERROR,
+        rcode = NO_ERROR,
         qdcount = 1,
-        ancount = 1,
+       ancount = 1,
         nscount = 0,
         arcount = 0
       },
@@ -233,10 +263,41 @@ unpackMessageQuestionsAndAnwsersSpec = do
         DNSQuestion {qname = ".example.com", qtype = MX, qclass = IN}
       ],
       answer = [
-        DNSResource {rname = ".example.com", rtype = MX, rclass = IN, ttl = 300, rdlength = 18, rdata = "20 .mx.example.com"}
+        DNSResource {rname = ".example.com", rtype = MX, rclass = IN, ttl = 300, rdlength = 17, rdata = "20 .mx.example.com"}
       ],
       authority = [],
       additional = []
     }
-    (unpackMessage bytestring) `shouldBe` dnsMessage
+    unpackMessage bytestring `shouldBe` dnsMessage
+
+  it "has only one question and three answer with type MX" $ do
+    let bytestring = BS.pack [0,1,1,0,0,1,0,3,0,0,0,0,7,101,120,97,109,112,108,101,3,99,111,109,0,0,15,0,1,7,101,120,97,109,112,108,101,3,99,111,109,0,0,15,0,1,0,0,1,44,0,17,0,10,2,109,120,7,101,120,97,109,112,108,101,3,99,111,109,7,101,120,97,109,112,108,101,3,99,111,109,0,0,15,0,1,0,0,1,44,0,18,0,15,3,109,120,97,7,101,120,97,109,112,108,101,3,99,111,109,7,101,120,97,109,112,108,101,3,99,111,109,0,0,15,0,1,0,0,1,44,0,18,0,20,3,109,120,98,7,101,120,97,109,112,108,101,3,99,111,109]
+    let dnsMessage = DNSMessage {
+      header = DNSHeader {
+        identifier = 1,
+        qr = False,
+        opcode = QUERY,
+        authoritativeAnswer = False,
+        truncatedMessage = False,
+        recursionDesired = True,
+        recursionAvailable = False,
+        z = False,
+        rcode = NO_ERROR,
+        qdcount = 1,
+        ancount = 3,
+        nscount = 0,
+        arcount = 0
+      },
+      question = [
+        DNSQuestion {qname = ".example.com", qtype = MX, qclass = IN}
+      ],
+      answer = [
+        DNSResource {rname = ".example.com", rtype = MX, rclass = IN, ttl = 300, rdlength = 17, rdata = "10 .mx.example.com"},
+        DNSResource {rname = ".example.com", rtype = MX, rclass = IN, ttl = 300, rdlength = 18, rdata = "15 .mxa.example.com"},
+        DNSResource {rname = ".example.com", rtype = MX, rclass = IN, ttl = 300, rdlength = 18, rdata = "20 .mxb.example.com"}
+      ],
+      authority = [],
+      additional = []
+    }
+    unpackMessage bytestring `shouldBe` dnsMessage
 
