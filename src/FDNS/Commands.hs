@@ -4,7 +4,7 @@ import System.Environment     (getProgName)
 import System.Console.GetOpt  (usageInfo, getOpt, OptDescr(Option), ArgOrder(Permute), ArgDescr(NoArg, ReqArg))
 
 commandHeader :: String -> String
-commandHeader name = "Usage: " ++ name ++ " -c FILE [-p PORT]"
+commandHeader name = "Usage: " ++ name ++ " -c FILE [-H HOST] [-p PORT]"
 
 help :: IO ()
 help = do
@@ -21,7 +21,7 @@ data Options = Options {
 defaultOptions = Options {
   optConfig       = "/etc/fdns/fdns.yaml",
   optBindAddress  = "0.0.0.0",
-  optPort         = "53",
+  optPort         = "9053",
   optHelp         = False
 }
 
@@ -37,20 +37,20 @@ options = [ Option
           , Option
               ['c'] ["config"]
               (ReqArg (\config opts -> opts { optConfig = config}) "FILE")
-              "Config file"
+              "Config file (Default '/etc/fdns/fdns.yaml')"
           , Option
               ['H'] ["host"]
               (ReqArg (\host opts -> opts { optBindAddress = host}) "HOST")
-              "Config file"
+              "Address to bind (Default '0.0.0.0')"
           , Option
               ['p'] ["port"]
               (ReqArg (\port opts -> opts { optPort = port}) "PORT")
-              "Config file"
+              "Port to bind (Default '53')"
           ]
 
 parseArgs :: [String] -> IO Options
 parseArgs args =
   case getOpt Permute options args of
-    ([], _, [])             -> return (defaultOptions {optHelp = True})
+    ([], _, [])             -> return (foldl (flip id) defaultOptions [])
     (opts, files, [])       -> return (foldl (flip id) defaultOptions opts)
     (_, _, errs)            -> ioError (userError (concat errs ++ usageInfo "Error parsing args" options))
