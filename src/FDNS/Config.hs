@@ -12,16 +12,14 @@ import FDNS.Utils
 
 data Record = Record {
   recordType    :: String,
-  value         :: String,
-  recordTTL     :: Word32
+  value         :: String
 } deriving (Eq, Show)
 
 instance FromJSON Record where
   parseJSON (Y.Object v) =
     Record <$>
     v .:   "type"       <*>
-    v .:   "value"      <*>
-    v .:   "ttl"
+    v .:   "value"
   parseJSON k = fail ("Expected Object for Config value: " ++ show k)
 
 data Domain = Domain {
@@ -36,7 +34,7 @@ instance FromJSON Domain where
     v .:   "records"
   parseJSON k = fail ("Expected Object for Config value: " ++ show k)
 
-data Config = Config {
+newtype Config = Config {
   domains :: [Domain]
 } deriving (Eq, Show)
 
@@ -49,20 +47,29 @@ instance FromJSON Config where
 readConfig :: String -> IO Config
 readConfig configFilePath =
   either (error . show) id <$>
-  (decodeFileEither configFilePath)
+  decodeFileEither configFilePath
 
-lookup :: Config -> String -> String -> [Record]
-lookup config name' recordType' =
+lookup :: Config -> DNSQuestion -> [DNSResource]
+lookup config question =
   case find (\d -> name d == name') (domains config) of
-    (Just domain) -> filter (\r -> recordType r == recordType') (records domain)
+    (Just domain) -> recordToResource' <$> filter (\r -> recordType r == recordType') (records domain)
     Nothing       -> []
+  where name' = qname question
+        recordType' = show $ qtype question
+        recordToResource' = recordToResource name' (qtype question)
 
 recordToResource :: String -> QTYPE -> Record -> DNSResource
 recordToResource name rtype record = DNSResource {
     rname     = name,
     rtype     = rtype,
     rclass    = IN,
-    ttl       = recordTTL record,
+    ttl       = 300,
     rdlength  = qtypeRDataLength rtype (value record),
     rdata     = value record
 }
+
+dnsResolver :: Config -> DNSMessage -> DNSMessage
+dnsResolver config message = message <<! resources
+  where questions = question message
+        lookupConfig = FDNS.Config.lookup config
+        resources = concat $ lookupConfig <$> questions

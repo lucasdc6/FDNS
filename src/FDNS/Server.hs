@@ -22,7 +22,7 @@ runUDPServer options = do
   let configFile = optConfig options
   logger <& ("Load config file from \"" ++ configFile ++ "\"")
   config <- FC.readConfig configFile
-  let lookupConfig = FC.lookup config
+  let resolver = dnsResolver config
   addrinfos <- getAddrInfo Nothing (Just host) (Just port)
   let serveraddr = head addrinfos
   sock <- socket (addrFamily serveraddr) Datagram defaultProtocol
@@ -32,17 +32,8 @@ runUDPServer options = do
     (rawMessage, sockAddr) <- recvFrom sock 4096
     let message = unpackMessage rawMessage
     logger <& ("Message: " ++ show message)
-    let question' = head (question message)
-    let records = lookupConfig (qname question') (show (qtype question'))
-    let recordToResource' = recordToResource (qname question') (qtype question')
-    logger <& ("Records: " ++ show records)
-    let answers = map recordToResource' records
-    logger <& ("Answers: " ++ show answers)
-    let message' = message <<! answers
-    logger <& ("Message': " ++ show message')
+    let message' = resolver message
     let response = packMessage message'
     logger <& ("Response body: " ++ show (BS.unpack (BS.drop 12 response)))
-    let testMessage = unpackMessage response
-    logger <& ("Response parsed: " ++ show testMessage)
     sendAllTo sock response sockAddr
 
