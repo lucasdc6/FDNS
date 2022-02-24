@@ -87,7 +87,7 @@ data DNSHeader = DNSHeader {
   recursionDesired    :: Bool,
   recursionAvailable  :: Bool,
   z                   :: Bool,
-  rccode              :: RCODE,
+  rcode               :: RCODE,
   qdcount             :: Word16,
   ancount             :: Word16,
   nscount             :: Word16,
@@ -120,6 +120,15 @@ data DNSMessage = DNSMessage {
   additional          :: [DNSResource]
 } deriving (Show, Eq)
 
+data DNSError = DNSMessageFormat deriving (Eq, Show)
+
 instance Ord DNSMessage where
   compare (DNSMessage h1 _ _ _ _) (DNSMessage h2 _ _ _ _) = compare h1 h2
 
+class DNSErrors a where
+
+instance DNSErrors RCODE  where
+
+tests :: (DNSErrors a) => Int -> Either String a
+tests 0 = Left "Error"
+tests 1 = Left "Error2"

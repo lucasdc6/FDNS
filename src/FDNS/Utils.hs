@@ -219,7 +219,7 @@ setQueryResponse
       recursionDesired
       recursionAvailable
       z
-      rccode
+      rcode
       qdcount
       ancount
       nscount
@@ -239,7 +239,7 @@ setQueryResponse
           recursionDesired    = recursionDesired,
           recursionAvailable  = recursionAvailable,
           z                   = z,
-          rccode              = rccode,
+          rcode               = rcode,
           qdcount             = qdcount,
           ancount             = ancount,
           nscount             = nscount,
@@ -267,7 +267,7 @@ setRCode
     ancount
     nscount
     arcount
-  ) rccode = DNSHeader {
+  ) rcode = DNSHeader {
       identifier          = identifier,
       qr                  = qr,
       opcode              = opcode,
@@ -276,7 +276,7 @@ setRCode
       recursionDesired    = recursionDesired,
       recursionAvailable  = recursionAvailable,
       z                   = z,
-      rccode              = rccode,
+      rcode               = rcode,
       qdcount             = qdcount,
       ancount             = ancount,
       nscount             = nscount,
@@ -295,7 +295,7 @@ setRCode
       recursionDesired
       recursionAvailable
       z
-      rccode
+      rcode
       qdcount
       ancount
       nscount
@@ -315,8 +315,8 @@ setRCode
         recursionDesired    = recursionDesired,
         recursionAvailable  = recursionAvailable,
         z                   = z,
-        rccode              = rccode,
-        qdcount             = qdcount + (fromIntegral (length questions)),
+        rcode               = rcode,
+        qdcount             = qdcount + fromIntegral (length questions),
         ancount             = ancount,
         nscount             = nscount,
         arcount             = arcount
@@ -339,7 +339,7 @@ setRCode
       recursionDesired
       recursionAvailable
       z
-      rccode
+      rcode
       qdcount
       ancount
       nscount
@@ -359,9 +359,9 @@ setRCode
         recursionDesired    = recursionDesired,
         recursionAvailable  = recursionAvailable,
         z                   = z,
-        rccode              = rccode,
+        rcode               = rcode,
         qdcount             = qdcount,
-        ancount             = ancount + (fromIntegral (length resources)),
+        ancount             = ancount + fromIntegral (length resources),
         nscount             = nscount,
         arcount             = arcount
       },
@@ -383,7 +383,7 @@ setRCode
       recursionDesired
       recursionAvailable
       z
-      rccode
+      rcode
       qdcount
       ancount
       nscount
@@ -403,10 +403,10 @@ setRCode
         recursionDesired    = recursionDesired,
         recursionAvailable  = recursionAvailable,
         z                   = z,
-        rccode              = rccode,
+        rcode               = rcode,
         qdcount             = qdcount,
         ancount             = ancount,
-        nscount             = nscount + (fromIntegral (length resources)),
+        nscount             = nscount + fromIntegral (length resources),
         arcount             = arcount
       },
       question = question,
@@ -427,7 +427,7 @@ setRCode
       recursionDesired
       recursionAvailable
       z
-      rccode
+      rcode
       qdcount
       ancount
       nscount
@@ -447,11 +447,11 @@ setRCode
         recursionDesired    = recursionDesired,
         recursionAvailable  = recursionAvailable,
         z                   = z,
-        rccode              = rccode,
+        rcode               = rcode,
         qdcount             = qdcount,
         ancount             = ancount,
         nscount             = nscount,
-        arcount             = arcount + (fromIntegral (length (resources)))
+        arcount             = arcount + fromIntegral (length resources)
       },
       question    = question,
       answer      = answer,

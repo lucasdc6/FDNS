@@ -39,15 +39,17 @@ unpackMessage rawMessage = DNSMessage{
   where (headerBytes, bodyBytes) = U.splitAt 12 rawMessage
         header            = unpackHeader headerBytes
         questions         = unpackQuestions (qdcount header) bodyBytes
-        quesrtionsOffset  = (foldl (\acc q -> acc + questionSize q) 0 questions)
+        quesrtionsOffset  = foldl (\acc q -> acc + questionSize q) 0 questions
         answers           = unpackResources (ancount header) (BS.drop quesrtionsOffset bodyBytes)
-        answersOffset     = quesrtionsOffset + (foldl (\acc q -> acc + resourceSize q) 0 answers)
+        answersOffset     = quesrtionsOffset +
+                            foldl (\acc q -> acc + resourceSize q) 0 answers
         authorities       = unpackResources (nscount header) (BS.drop answersOffset bodyBytes)
-        authorityOffset   = quesrtionsOffset + answersOffset + (foldl (\acc q -> acc + resourceSize q) 0 authorities)
+        authorityOffset   = quesrtionsOffset +
+                            answersOffset + foldl (\acc q -> acc + resourceSize q) 0 authorities
         additionals       = unpackResources (arcount header) (BS.drop answersOffset bodyBytes)
 
 {-|
--- Header formatmap
+-- Header format
 --
 --                                   1  1  1  1  1  1
 --     0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
@@ -67,19 +69,31 @@ unpackMessage rawMessage = DNSMessage{
 |-}
 unpackHeader :: BS.ByteString -> DNSHeader
 unpackHeader bytes = DNSHeader{
-    identifier          = combineWords2 (fromMaybe 0 firstByte, fromMaybe 0 secondByte),
-    qr                  = getQR (fromMaybe 0 thirdByte),
-    opcode              = getOpCode (fromMaybe 0 thirdByte),
+    identifier          = combineWords2
+                          (fromMaybe 0 firstByte,
+                           fromMaybe 0 secondByte),
+    qr                  = getQR $ fromMaybe 0 thirdByte,
+    opcode              = getOpCode $ fromMaybe 0 thirdByte,
     authoritativeAnswer = getAA (fromMaybe 0 thirdByte),
     truncatedMessage    = getTC (fromMaybe 0 thirdByte),
     recursionDesired    = getRD (fromMaybe 0 thirdByte),
-    recursionAvailable  = True,
+    recursionAvailable  = False,
     z                   = False,
-    rccode              = if elem Nothing maybeBytes then getRCode 1 else getRCode (fromMaybe 1 fouthByte),
-    qdcount             = combineWords2 (fromMaybe 0  fifthByte, fromMaybe 0 sixthByte),
-    ancount             = combineWords2 (fromMaybe 0 seventhByte, fromMaybe 0 eighthByte),
-    nscount             = combineWords2 (fromMaybe 0 ninethByte, fromMaybe 0 tenthByte),
-    arcount             = combineWords2 (fromMaybe 0 eleventhByte, fromMaybe 0 twelfthByte)
+    rcode               = if Nothing `elem` maybeBytes
+                          then getRCode 1
+                          else getRCode $ fromMaybe 1 fouthByte,
+    qdcount             = combineWords2
+                          (fromMaybe 0 fifthByte,
+                           fromMaybe 0 sixthByte),
+    ancount             = combineWords2
+                          (fromMaybe 0 seventhByte,
+                           fromMaybe 0 eighthByte),
+    nscount             = combineWords2
+                          (fromMaybe 0 ninethByte,
+                           fromMaybe 0 tenthByte),
+    arcount             = combineWords2
+                          (fromMaybe 0 eleventhByte,
+                           fromMaybe 0 twelfthByte)
 }
   where firstByte       = indexMaybe bytes 0
         secondByte      = indexMaybe bytes 1
@@ -93,14 +107,28 @@ unpackHeader bytes = DNSHeader{
         tenthByte       = indexMaybe bytes 9
         eleventhByte    = indexMaybe bytes 10
         twelfthByte     = indexMaybe bytes 11
-        maybeBytes      = [firstByte, secondByte, thirdByte, fouthByte, fifthByte, sixthByte, seventhByte, eighthByte, ninethByte, tenthByte, eleventhByte, twelfthByte]
+        maybeBytes      = [
+                            firstByte, secondByte,
+                            thirdByte, fouthByte,
+                            fifthByte, sixthByte,
+                            seventhByte, eighthByte,
+                            ninethByte, tenthByte,
+                            eleventhByte, twelfthByte
+                          ]
 
-unpackQuestions :: Word16 -> BS.ByteString -> [DNSQuestion]
-unpackQuestions 0 bytes = []
-unpackQuestions n bytes = case unpackQuestion bytes of
-                          (Just question, bytes') -> question : (unpackQuestions (n-1) bytes')
-                          (Nothing, _)            -> []
-  where count = fromIntegral n
+unpackList :: (BS.ByteString -> (Maybe a, BS.ByteString))
+              -> Word16
+              -> BS.ByteString
+              -> [a]
+unpackList unpack 0 bytes = []
+unpackList unpack n bytes = case unpack bytes of
+                          (Just resource, bytes')  ->
+                            resource : unpackList unpack (n-1) bytes'
+                          (Nothing, bytes')        ->
+                            unpackList unpack (n-1) bytes'
+  where count     = fromIntegral n
+
+unpackQuestions = unpackList unpackQuestion
 
 {-|
 -- Questions format
@@ -118,9 +146,10 @@ unpackQuestions n bytes = case unpackQuestion bytes of
 --   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 |-}
 unpackQuestion :: BS.ByteString -> (Maybe DNSQuestion, BS.ByteString)
-unpackQuestion bytes =  if elem Nothing maybeBytes
+unpackQuestion bytes =  if Nothing `elem` maybeBytes
                         then (Nothing, bytes)
-                        else (Just (DNSQuestion{
+                        else (Just (
+                            DNSQuestion{
                               qname = getName domainBytes,
                               qtype = getQType (fromMaybe 0 firstByte, fromMaybe 0 secondByte),
                               qclass = getQClass (fromMaybe 0 thirdByte, fromMaybe 0 fouthByte)
@@ -132,12 +161,7 @@ unpackQuestion bytes =  if elem Nothing maybeBytes
         fouthByte   = indexMaybe rest 4
         maybeBytes  = [firstByte, secondByte, thirdByte, fouthByte]
 
-unpackResources :: Word16 -> BS.ByteString -> [DNSResource]
-unpackResources 0 bytes = []
-unpackResources n bytes = case unpackResource bytes of
-                          (Just resource) -> resource : (unpackResources (n-1) bytes)
-                          Nothing         -> []
-  where count     = fromIntegral n
+unpackResources = unpackList unpackResource
 
 {-|
 -- Resources format
@@ -163,17 +187,17 @@ unpackResources n bytes = case unpackResource bytes of
 --   /                                               /
 --   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 |-}
-unpackResource :: BS.ByteString -> Maybe DNSResource
-unpackResource bytes =  if elem Nothing maybeBytes
-                        then Nothing
-                        else Just (DNSResource{
+unpackResource :: BS.ByteString -> (Maybe DNSResource, BS.ByteString)
+unpackResource bytes =  if Nothing `elem` maybeBytes
+                        then (Nothing, bytes)
+                        else (Just (DNSResource{
                               rname     = getName domainBytes,
                               rtype     = rtype,
                               rclass    = getQClass (fromMaybe 0 thirdByte, fromMaybe 0 fouthByte),
                               ttl       = combineWords4 (fromMaybe 0 fifthByte, fromMaybe 0 sixthByte, fromMaybe 0 seventhByte, fromMaybe 0 eighthByte),
-                              rdlength  = qtypeRDataLength rtype rdata,
+                              rdlength  = rdlength,
                               rdata     = rdata
-                            })
+                            }), BS.drop (fromIntegral rdlength) rdataBytes)
   where (domainBytes, rest) = U.span (/= '\NUL') bytes
         firstByte   = indexMaybe rest 1
         secondByte  = indexMaybe rest 2
@@ -186,7 +210,8 @@ unpackResource bytes =  if elem Nothing maybeBytes
         ninethByte  = indexMaybe rest 9
         tenthByte   = indexMaybe rest 10
         rtype       = getQType (fromMaybe 0 firstByte, fromMaybe 0 secondByte)
-        rdataBytes  = BS.drop 11 rest
-        maybeBytes  = [firstByte, secondByte, thirdByte, fouthByte]
+        rdlength    = combineWords2 (fromMaybe 0 ninethByte, fromMaybe 0 tenthByte)
+        rdataBytes  = BS.take (fromIntegral rdlength) (BS.drop 11 rest)
         rdata       = unpackRdata rtype rdataBytes
+        maybeBytes  = [firstByte, secondByte, thirdByte, fouthByte]
 

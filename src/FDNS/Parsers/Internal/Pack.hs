@@ -24,7 +24,7 @@ packArdata rdata = BS.pack (map packWord8 (splitOn "." rdata))
 
 packAAAArdata :: String -> BS.ByteString
 packAAAArdata rdata =
-  let bytes = (splitOn ":" rdata) >>= (\x -> chunksOf 2 x)
+  let bytes = splitOn ":" rdata >>= \x -> chunksOf 2 x
   in BS.pack (map (\x -> packWord8 ("0x" ++ x)) bytes)
 
 packMXrdata :: String -> BS.ByteString
@@ -32,5 +32,5 @@ packMXrdata rdata =
   let (preference:(domain:xs)) = splitOn " " rdata
   in case readMaybe preference :: Maybe Word16 of
     (Just x)  -> let labels = drop 1 (splitOn "." domain)
-                 in BS.pack ((encodeWord16 x) ++ (map (\x -> fromIntegral (ord x) :: Word8) ((foldl packQName "" labels) ++ "\NUL")))
+                 in BS.pack (encodeWord16 x ++ map (\x -> fromIntegral (ord x) :: Word8) (foldl packQName "" labels))
     Nothing   -> BS.empty
