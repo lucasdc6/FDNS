@@ -32,5 +32,6 @@ packMXrdata rdata =
   let (preference:(domain:xs)) = splitOn " " rdata
   in case readMaybe preference :: Maybe Word16 of
     (Just x)  -> let labels = drop 1 (splitOn "." domain)
-                 in BS.pack (encodeWord16 x ++ map (\x -> fromIntegral (ord x) :: Word8) (foldl packQName "" labels))
+                 in let domain = foldl packQName "" labels ++ "\NUL" in
+                   BS.pack $ (encodeWord16 x ++ map (\x -> fromIntegral (ord x) :: Word8) domain)
     Nothing   -> BS.empty

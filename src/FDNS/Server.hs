@@ -34,6 +34,6 @@ runUDPServer options = do
     logger <& ("Message: " ++ show message)
     let message' = resolver message
     let response = packMessage message'
-    logger <& ("Response body: " ++ show (BS.unpack (BS.drop 12 response)))
+    logger <& ("Response body: " ++ (show $ BS.unpack response))
     sendAllTo sock response sockAddr
 

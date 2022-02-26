@@ -7,13 +7,13 @@ data OPCODE =   QUERY
               | STATUS
               | OPCODE_OTHER deriving (Eq, Show, Enum)
 
-data RCODE =    NO_ERROR
+data RCODE =  RCODE_OTHER
+              |  NO_ERROR
               | FORMAT_ERROR
               | SERVER_FAILURE
               | NAME_ERROR
               | NOT_IMPLEMENTED
-              | REFUCER
-              | RCODE_OTHER deriving (Eq, Show, Enum)
+              | REFUCER deriving (Eq, Show, Enum)
 
 data QTYPE =    A
               | AAAA
@@ -120,9 +120,12 @@ data DNSMessage = DNSMessage {
   additional          :: [DNSResource]
 } deriving (Show, Eq)
 
+instance Ord DNSMessage where
+  compare (DNSMessage h1 _ _ _ _) (DNSMessage h2 _ _ _ _) = compare h1 h2
+
 data DNSError =
   DNSError RCODE String
   deriving (Eq, Show)
 
-instance Ord DNSMessage where
-  compare (DNSMessage h1 _ _ _ _) (DNSMessage h2 _ _ _ _) = compare h1 h2
+instance Ord DNSError where
+  compare (DNSError rcode1 _) (DNSError rcode2 _) = compare (fromEnum rcode1) (fromEnum rcode2)
