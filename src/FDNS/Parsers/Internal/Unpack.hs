@@ -35,16 +35,16 @@ unpackArdata bytes =
     then Just(intercalate "." rdata)
     else Nothing
   where rdataBytes = BS.unpack (BS.take 4 bytes)
-        rdata = map (\byte -> show byte) rdataBytes
+        rdata = map show rdataBytes
 
 
 unpackAAAArdata :: BS.ByteString -> Maybe String
 unpackAAAArdata bytes =
   if BS.length bytes >= 16
-    then Just(rdata)
+    then Just rdata
     else Nothing
   where rdataBytes = BS.unpack (BS.take 16 bytes)
-        rdataRaw = foldr (\x hex -> if x <= 15 then "0" ++ (showHex x hex) else showHex x hex ) "" rdataBytes
+        rdataRaw = foldr (\x hex -> if x <= 15 then "0" ++ showHex x hex else showHex x hex ) "" rdataBytes
         rdata = intercalate ":" (chunksOf 4 rdataRaw)
 
 unpackMXrdata :: BS.ByteString -> Maybe String

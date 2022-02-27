@@ -31,7 +31,7 @@ combineWords4 (b1, b2, b3, b4) = (fromIntegral b1 `shiftL` 24) +
 
 packWord8 :: String -> Word8
 packWord8 str =
-  case (readMaybe str) :: Maybe Word8 of
+  case readMaybe str :: Maybe Word8 of
     (Just n)  -> n
     Nothing   -> 0
 
