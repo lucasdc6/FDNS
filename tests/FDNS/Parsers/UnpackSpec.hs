@@ -7,8 +7,62 @@ import FDNS.Parsers.Unpack
 
 spec :: Spec
 spec = do
+  describe "Incomplete DNS Message header unpack" unpackIncompleteHeaderSpec
   describe "DNS Message unpack questions" unpackMessageQuestionsSpec
   describe "DNS Message unpack questions with answers" unpackMessageQuestionsAndAnwsersSpec
+
+
+unpackIncompleteHeaderSpec :: Spec
+unpackIncompleteHeaderSpec = do
+  it "has empty" $ do
+    let bytestring = BS.pack []
+    let dnsMessage = DNSMessage {
+      header = DNSHeader {
+        identifier = 0,
+        qr = False,
+        opcode = QUERY,
+        authoritativeAnswer = False,
+        truncatedMessage = False,
+        recursionDesired = False,
+        recursionAvailable = False,
+        z = False,
+        rcode = FORMAT_ERROR,
+        qdcount = 0,
+        ancount = 0,
+        nscount = 0,
+        arcount = 0
+      },
+      question = [],
+      answer = [],
+      authority = [],
+      additional = []
+    }
+    unpackMessage bytestring `shouldBe` dnsMessage
+
+  it "has only the identifier" $ do
+    let bytestring = BS.pack [0,1]
+    let dnsMessage = DNSMessage {
+      header = DNSHeader {
+        identifier = 1,
+        qr = False,
+        opcode = QUERY,
+        authoritativeAnswer = False,
+        truncatedMessage = False,
+        recursionDesired = False,
+        recursionAvailable = False,
+        z = False,
+        rcode = FORMAT_ERROR,
+        qdcount = 0,
+        ancount = 0,
+        nscount = 0,
+        arcount = 0
+      },
+      question = [],
+      answer = [],
+      authority = [],
+      additional = []
+    }
+    unpackMessage bytestring `shouldBe` dnsMessage
 
 unpackMessageQuestionsSpec :: Spec
 unpackMessageQuestionsSpec = do
