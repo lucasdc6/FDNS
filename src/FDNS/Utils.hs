@@ -207,6 +207,9 @@ resourceSize resource = length (rname resource) +
                         -- RDATA size
                         fromIntegral (rdlength resource)
 
+getOffset :: (a -> Int) -> Int -> [a] -> Int
+getOffset f = foldl (\acc r -> acc + f r)
+
 setQueryResponse :: DNSMessage -> DNSMessage
 setQueryResponse
   (DNSMessage

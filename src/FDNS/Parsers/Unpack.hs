@@ -31,25 +31,36 @@ import FDNS.Parsers.Internal.Unpack
 |-}
 unpackMessage :: BS.ByteString -> DNSMessage
 unpackMessage rawMessage = DNSMessage{
-  header          = header,
+  header          = header',
   question        = questions',
   answer          = answers',
-  authority       = authorities,
-  additional      = additionals
+  authority       = authorities',
+  additional      = additionals'
 }
   where (headerBytes, bodyBytes) = U.splitAt 12 rawMessage
-        header            = unpackHeader headerBytes
-        questions         = unpackQuestions (qdcount header) bodyBytes
-        questions'        = rights questions
-        quesrtionsOffset  = foldl (\acc q -> acc + questionSize q) 0 questions'
-        answers           = unpackResources (ancount header) (BS.drop quesrtionsOffset bodyBytes)
-        answers'          = rights answers
-        answersOffset     = quesrtionsOffset +
-                            foldl (\acc q -> acc + resourceSize q) 0 answers'
-        authorities       = rights $ unpackResources (nscount header) (BS.drop answersOffset bodyBytes)
-        authorityOffset   = quesrtionsOffset +
-                            answersOffset + foldl (\acc q -> acc + resourceSize q) 0 authorities
-        additionals       = rights $ unpackResources (arcount header) (BS.drop answersOffset bodyBytes)
+        header                   = unpackHeader headerBytes
+        questions                = unpackQuestions (qdcount header) bodyBytes
+        answers                  = unpackResources (ancount header) (BS.drop questionsOffset bodyBytes)
+        authorities              = unpackResources (nscount header) (BS.drop answersOffset bodyBytes)
+        additionals              = unpackResources (arcount header) (BS.drop answersOffset bodyBytes)
+        -- Modified DNS fields
+        header'                  = setRCode header rcode'
+        questions'               = rights questions
+        answers'                 = rights answers
+        authorities'             = rights authorities
+        additionals'             = rights additionals
+        -- Offsets from every field
+        questionsOffset          = getOffset questionSize 0 questions'
+        answersOffset            = getOffset resourceSize questionsOffset answers'
+        authorityOffset          = getOffset resourceSize (questionsOffset + answersOffset) authorities'
+        -- Error handling
+        errors                   = lefts questions ++
+                                   lefts answers ++
+                                   lefts authorities ++
+                                   lefts additionals
+        (DNSError rcode' _)      = if length errors > 0
+                                   then maximum errors
+                                   else DNSError (rcode header) ""
 
 {-|
 -- Header format
@@ -194,8 +205,8 @@ unpackResource bytes =  if Nothing `elem` maybeBytes
                         else (Right (DNSResource{
                               rname     = getName domainBytes,
                               rtype     = rtype,
-                              rclass    = getQClass (fromMaybe 0 thirdByte, fromMaybe 0 fouthByte),
-                              ttl       = combineWords4 (fromMaybe 0 fifthByte, fromMaybe 0 sixthByte, fromMaybe 0 seventhByte, fromMaybe 0 eighthByte),
+                              rclass    = getQClass (fromJust thirdByte, fromJust fouthByte),
+                              ttl       = combineWords4 (fromJust fifthByte, fromJust sixthByte, fromJust seventhByte, fromJust eighthByte),
                               rdlength  = rdlength,
                               rdata     = rdata
                             }), BS.drop (fromIntegral rdlength + 11) rest)
@@ -214,5 +225,11 @@ unpackResource bytes =  if Nothing `elem` maybeBytes
         rdlength    = combineWords2 (fromMaybe 0 ninethByte, fromMaybe 0 tenthByte)
         rdataBytes  = BS.take (fromIntegral rdlength) (BS.drop 11 rest)
         rdata       = unpackRdata rtype rdataBytes
-        maybeBytes  = [firstByte, secondByte, thirdByte, fouthByte, fifthByte, sixthByte, seventhByte, eighthByte, ninethByte, tenthByte]
+        maybeBytes  = [
+                        firstByte, secondByte,
+                        thirdByte, fouthByte,
+                        fifthByte, sixthByte,
+                        seventhByte, eighthByte,
+                        ninethByte, tenthByte
+                      ]
 
